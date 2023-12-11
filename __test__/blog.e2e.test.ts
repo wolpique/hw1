@@ -50,11 +50,6 @@ describe('/videos', () => {
     it('should return 404 for deleting a non-existing video ID', async () => {
         const res = await request(app).delete('/videos/999');
         expect(res.status).to.equal(404);
-      });
-    
-    it('should return 404 for deleting a non-existing video ID', async () => {
-        const res = await request(app).delete('/videos/999');
-        expect(res.status).to.equal(404);
-      });
+      })
 
 })   

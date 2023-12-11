@@ -81,8 +81,8 @@ app.post('/videos', (req:RequestWithBody<CreateVideoDto>, res:Response) => {
     }
 
     let {title, author, availableResolutions} = req.body
-    if (!title || title.trim().length < 1 || title.trim().length > 40){
-        error.errorMessages.push({message: "Invalid title", field: "title"})
+    if (title === null || title === undefined || (typeof title === 'string' && title.trim().length < 1) || title.trim().length > 40) {
+        error.errorMessages.push({ message: "Invalid title", field: "title" })
     }
     if (!author || author.trim().length < 1 || author.trim().length > 20){
         error.errorMessages.push({message: "Invalid author", field: "author"})
@@ -141,8 +141,8 @@ app.put('/videos/:id', (req:RequestWithBodyAndParams<Params, UpdateVideoDto>, re
     }
 
     let {title, author, availableResolutions, canBeDownloaded, minAgeRestriction, publicationDate} = req.body
-        if (!title || title.trim().length < 1 || title.trim().length > 40){
-            error.errorMessages.push({message: "Invalid title", field: "title"})
+        if (title === null || title === undefined || (typeof title === 'string' && title.trim().length < 1) || title.trim().length > 40) {
+            error.errorMessages.push({ message: "Invalid title", field: "title" })
         }
         if (!author || author.trim().length < 1 || author.trim().length > 20){
             error.errorMessages.push({message: "Invalid author", field: "author"})
@@ -211,5 +211,4 @@ app.delete('/videos/:id', (req: RequestWithParams<Params>, res: Response) => {
 app.delete('/testing/all-data', (req: RequestWithParams<Params>, res: Response) => {
     videos.length = 0;
     res.sendStatus(204);
-
 })
