@@ -36,18 +36,18 @@ exports.app.get('/videos/:id', (req, res) => {
 });
 exports.app.post('/videos', (req, res) => {
     let error = {
-        errorMessages: []
+        errorsMessages: []
     };
     let { title, author, availableResolutions } = req.body;
-    if (!title || title.trim().length < 1 || title.trim().length > 40) {
-        error.errorMessages.push({ message: "Invalid title", field: "title" });
+    if (title === null || title === undefined || (typeof title === 'string' && title.trim().length < 1) || title.trim().length > 40) {
+        error.errorsMessages.push({ message: "Invalid title", field: "title" });
     }
     if (!author || author.trim().length < 1 || author.trim().length > 20) {
-        error.errorMessages.push({ message: "Invalid author", field: "author" });
+        error.errorsMessages.push({ message: "Invalid author", field: "author" });
     }
     if (Array.isArray(availableResolutions)) {
         availableResolutions.map((r) => {
-            !AvailableResolutions.includes(r) && error.errorMessages.push({
+            !AvailableResolutions.includes(r) && error.errorsMessages.push({
                 message: "Invalid author",
                 field: "availableResolutions"
             });
@@ -56,7 +56,7 @@ exports.app.post('/videos', (req, res) => {
     else {
         availableResolutions = [];
     }
-    if (error.errorMessages.length) {
+    if (error.errorsMessages.length) {
         res.status(400).send(error);
         return;
     }
@@ -79,18 +79,18 @@ exports.app.post('/videos', (req, res) => {
 exports.app.put('/videos/:id', (req, res) => {
     const id = +req.params.id;
     let error = {
-        errorMessages: []
+        errorsMessages: []
     };
     let { title, author, availableResolutions, canBeDownloaded, minAgeRestriction, publicationDate } = req.body;
-    if (!title || title.trim().length < 1 || title.trim().length > 40) {
-        error.errorMessages.push({ message: "Invalid title", field: "title" });
+    if (title === null || title === undefined || (typeof title === 'string' && title.trim().length < 1) || title.trim().length > 40) {
+        error.errorsMessages.push({ message: "Invalid title", field: "title" });
     }
     if (!author || author.trim().length < 1 || author.trim().length > 20) {
-        error.errorMessages.push({ message: "Invalid author", field: "author" });
+        error.errorsMessages.push({ message: "Invalid author", field: "author" });
     }
     if (Array.isArray(availableResolutions)) {
         availableResolutions.map((r) => {
-            !AvailableResolutions.includes(r) && error.errorMessages.push({
+            !AvailableResolutions.includes(r) && error.errorsMessages.push({
                 message: "Invalid author",
                 field: "availableResolutions"
             });
@@ -99,16 +99,18 @@ exports.app.put('/videos/:id', (req, res) => {
     else {
         availableResolutions = [];
     }
-    if (typeof canBeDownloaded === "undefined") {
+    console.log(typeof canBeDownloaded);
+    if (typeof canBeDownloaded !== "boolean") {
         canBeDownloaded = false;
+        error.errorsMessages.push({ message: "Invalid canBeDownloaded", field: "canBeDownloaded" });
     }
     if (typeof minAgeRestriction !== "undefined" && typeof minAgeRestriction == "number") {
-        minAgeRestriction < 1 || minAgeRestriction > 18 && error.errorMessages.push({ message: "Invalid minAgRestriction", field: "minAgeRestriction" });
+        minAgeRestriction < 1 || minAgeRestriction > 18 && error.errorsMessages.push({ message: "Invalid minAgRestriction", field: "minAgeRestriction" });
     }
     else {
         minAgeRestriction = null;
     }
-    if (error.errorMessages.length) {
+    if (error.errorsMessages.length) {
         res.status(400).send(error);
         return;
     }
@@ -135,4 +137,8 @@ exports.app.delete('/videos/:id', (req, res) => {
     }
     const deletedItem = videos.splice(videoIndex, 1)[0];
     res.sendStatus(204).send(deletedItem);
+});
+exports.app.delete('/testing/all-data', (req, res) => {
+    videos.length = 0;
+    res.sendStatus(204);
 });
