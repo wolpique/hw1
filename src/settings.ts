@@ -158,7 +158,7 @@ app.put('/videos/:id', (req:RequestWithBodyAndParams<Params, UpdateVideoDto>, re
         }else{
             availableResolutions = []
         }
-        if (typeof canBeDownloaded === "undefined"){
+        if (typeof canBeDownloaded !== "boolean"){
             canBeDownloaded = false
             error.errorsMessages.push({message: "Invalid canBeDownloaded", field: "canBeDownloaded"})
         }
