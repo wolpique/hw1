@@ -160,6 +160,7 @@ app.put('/videos/:id', (req:RequestWithBodyAndParams<Params, UpdateVideoDto>, re
         }
         if (typeof canBeDownloaded === "undefined"){
             canBeDownloaded = false
+            error.errorsMessages.push({message: "Invalid canBeDownloaded", field: "canBeDownloaded"})
         }
 
         if (typeof minAgeRestriction !== "undefined" && typeof minAgeRestriction == "number") {
