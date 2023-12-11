@@ -15,7 +15,7 @@ type CreateVideoDto = {
 }
 
 type ErrorType = {
-    errorMessages: ErrorMessageType[]
+    errorsMessages: ErrorMessageType[]
 }
 
 type ErrorMessageType = {
@@ -77,19 +77,19 @@ app.get('/videos/:id', (req: RequestWithParams<Params>, res: Response) => {
 
 app.post('/videos', (req:RequestWithBody<CreateVideoDto>, res:Response) => {
     let error: ErrorType = {
-        errorMessages: []
+        errorsMessages: []
     }
 
     let {title, author, availableResolutions} = req.body
     if (title === null || title === undefined || (typeof title === 'string' && title.trim().length < 1) || title.trim().length > 40) {
-        error.errorMessages.push({ message: "Invalid title", field: "title" })
+        error.errorsMessages.push({ message: "Invalid title", field: "title" })
     }
     if (!author || author.trim().length < 1 || author.trim().length > 20){
-        error.errorMessages.push({message: "Invalid author", field: "author"})
+        error.errorsMessages.push({message: "Invalid author", field: "author"})
     }
     if (Array.isArray(availableResolutions)){
         availableResolutions.map((r) => {
-            !AvailableResolutions.includes(r) && error.errorMessages.push({
+            !AvailableResolutions.includes(r) && error.errorsMessages.push({
                 message: "Invalid author", 
                 field: "availableResolutions"
             })
@@ -98,7 +98,7 @@ app.post('/videos', (req:RequestWithBody<CreateVideoDto>, res:Response) => {
     }else{
         availableResolutions = []
     }
-    if (error.errorMessages.length){
+    if (error.errorsMessages.length){
         res.status(400).send(error)
         return
     }
@@ -137,19 +137,19 @@ app.put('/videos/:id', (req:RequestWithBodyAndParams<Params, UpdateVideoDto>, re
     const id = +req.params.id
 
     let error: ErrorType = {
-        errorMessages: []
+        errorsMessages: []
     }
 
     let {title, author, availableResolutions, canBeDownloaded, minAgeRestriction, publicationDate} = req.body
         if (title === null || title === undefined || (typeof title === 'string' && title.trim().length < 1) || title.trim().length > 40) {
-            error.errorMessages.push({ message: "Invalid title", field: "title" })
+            error.errorsMessages.push({ message: "Invalid title", field: "title" })
         }
         if (!author || author.trim().length < 1 || author.trim().length > 20){
-            error.errorMessages.push({message: "Invalid author", field: "author"})
+            error.errorsMessages.push({message: "Invalid author", field: "author"})
         }
         if (Array.isArray(availableResolutions)){
             availableResolutions.map((r) => {
-                !AvailableResolutions.includes(r) && error.errorMessages.push({
+                !AvailableResolutions.includes(r) && error.errorsMessages.push({
                     message: "Invalid author", 
                     field: "availableResolutions"
                 })
@@ -163,12 +163,12 @@ app.put('/videos/:id', (req:RequestWithBodyAndParams<Params, UpdateVideoDto>, re
         }
 
         if (typeof minAgeRestriction !== "undefined" && typeof minAgeRestriction == "number") {
-            minAgeRestriction < 1 || minAgeRestriction > 18 && error.errorMessages.push({message: "Invalid minAgRestriction", field: "minAgeRestriction"}) 
+            minAgeRestriction < 1 || minAgeRestriction > 18 && error.errorsMessages.push({message: "Invalid minAgRestriction", field: "minAgeRestriction"}) 
         }else{
             minAgeRestriction = null
         } 
 
-        if (error.errorMessages.length){
+        if (error.errorsMessages.length){
             res.status(400).send(error)
             return
         }
