@@ -12,25 +12,23 @@ export class BlogRepository{
         if (!blog){ 
             return null
         }
+
         return blog
     }
     static createBlog(createdBlog: BlogType) {
-        const newBlog = db.blogs.push(createdBlog)
-        return newBlog
+        db.blogs.push(createdBlog)
+
     }
 
     static updateBlog(updatedBlog: BlogType) {
         const index = db.blogs.findIndex(blog=> blog.id === updatedBlog.id);
 
-        if (index !== -1 ) {
-            const originalBlog = db.blogs[index]
-            const newUpdatedBlog = db.blogs.slice()
-            newUpdatedBlog[index] = updatedBlog;
-            return originalBlog
+        if (index === -1 ) {
+            return false
         }
 
-        const newUpdatedBlog = db.blogs.splice(index, 1, updatedBlog)
-        return newUpdatedBlog
+        db.blogs.splice(index, 1, updatedBlog)
+        return true
     }
 
     static deleteBlogById(id:string):BlogType | null {
