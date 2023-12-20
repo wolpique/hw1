@@ -35,6 +35,7 @@ blogRoutes.post('/', authMiddleware, blogValidation(), (req: RequestWithBody<Blo
     }
     
     BlogRepository.createBlog(newBlog);
+
     return res.status(201).send(newBlog)
 
 })
@@ -42,21 +43,26 @@ blogRoutes.post('/', authMiddleware, blogValidation(), (req: RequestWithBody<Blo
 blogRoutes.put('/:id', authMiddleware, blogValidation(), (req: RequestWithBodyAndParams<BlogParams, BlogBody>, res:Response) => {
     const id = req.params.id
     const blog = BlogRepository.getBlogById(id)
+
     if (!blog){
         return res.sendStatus(404)
     }
-    res.send(blog)
 
     let {name, description, websiteUrl} = req.body
+
     const updatedNewBlog = {
         ...blog,
-        id: randomUUID(),
         name,
         description,
         websiteUrl
     }
 
-    BlogRepository.updateBlog(updatedNewBlog)
+    const blogIsUpdated = BlogRepository.updateBlog(updatedNewBlog)
+
+    if(!blogIsUpdated){
+        return res.sendStatus(404)
+    }
+
     return res.sendStatus(201);
 
 })
