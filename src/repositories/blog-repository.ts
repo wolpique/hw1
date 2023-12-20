@@ -31,13 +31,14 @@ export class BlogRepository{
         return true
     }
 
-    static deleteBlogById(id:string):BlogType | null {
+    static deleteBlogById(id:string): boolean {
         const index = db.blogs.findIndex(blog=> blog.id === id);
 
         if (index === -1){
-            return null
+            return false
         }
-        const deleteBlog = db.blogs.splice(index, 1)[0]
-        return deleteBlog 
+
+        db.blogs.splice(index, 1)
+        return true
     }
 }

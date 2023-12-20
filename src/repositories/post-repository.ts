@@ -24,24 +24,23 @@ export class PostRepository {
     static updatePost (updatedPost: PostType) {
         const index = db.posts.findIndex(p => p.id === updatedPost.id)
         
-        if (index !== -1) {
-            const originalPost = db.posts[index]
-            const newUpdatedPost = db.posts.slice()
-            newUpdatedPost[index] = updatedPost
-            return originalPost
+        if (index === -1) {
+           return false
         } 
-        const newUpdatedPost = db.posts.splice(index, 1, updatedPost)
-        return newUpdatedPost
+
+        db.posts.splice(index, 1, updatedPost)
+
+        return true
     }
 
-    static deletePostById (id: string) : PostType | null {
+    static deletePostById (id: string) : boolean {
         const index = db.posts.findIndex(p => p.id === id)
 
         if (index !== -1) {
-            const deletePost = db.posts.splice(index, 1)[0]
-            return deletePost
+            db.posts.splice(index, 1)
+            return true
         }else{
-            return null
+            return false
         }
     }
 } 
