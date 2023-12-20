@@ -18,7 +18,7 @@ postRoutes.get('/', (req: Request, res:Response) => {
 
 })
 
-postRoutes.get('/:id', authMiddleware, (req: RequestWithParams<PostParams>, res:Response) => {
+postRoutes.get('/:id', (req: RequestWithParams<PostParams>, res:Response) => {
     const id = req.params.id
     const post = PostRepository.getPostById(id)
 

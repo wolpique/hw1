@@ -15,7 +15,7 @@ blogRoutes.get('/', (req: Request, res:Response) => {
     return res.send(blogs)
 })
 
-blogRoutes.get('/:id', authMiddleware, (req: RequestWithParams<BlogParams>, res:Response) => {
+blogRoutes.get('/:id', (req: RequestWithParams<BlogParams>, res:Response) => {
     const id = req.params.id
     const blog = BlogRepository.getBlogById(id)
 
