@@ -63,7 +63,7 @@ blogRoutes.put('/:id', authMiddleware, blogValidation(), (req: RequestWithBodyAn
         return res.sendStatus(404)
     }
 
-    return res.sendStatus(201);
+    return res.sendStatus(204);
 
 })
 
@@ -77,9 +77,4 @@ blogRoutes.delete('/:id', authMiddleware, (req:RequestWithParams<BlogParams>, re
     BlogRepository.deleteBlogById(id)
     return res.sendStatus(204)
 
-})
-
-blogRoutes.delete('/testing/all-data', (req: RequestWithParams<BlogParams>, res: Response) => {
-    db.blogs.length = 0;
-    return res.sendStatus(204);
 })

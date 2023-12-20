@@ -59,13 +59,20 @@ postRoutes.put('/:id', authMiddleware, postValidation(), (req:RequestWithBodyAnd
     }
    
     const {title, shortDescription, content, blogId} = req.body
+
+    const blog = BlogRepository.getBlogById(blogId)
+
     const updatedPost = {
         ...post,
         title,
         shortDescription,
         content,
-        blogId: blogId ? blogId: post.blogId
+        blogId: blogId,
+        blogName: blog!.name
     }
+
+    PostRepository.updatePost(updatedPost)
+
     return res.status(204).send(updatedPost)
 })
 
@@ -78,9 +85,4 @@ postRoutes.delete('/:id', authMiddleware, (req:RequestWithParams<PostParams>, re
     }
     PostRepository.deletePostById(id)
     return res.sendStatus(204)
-})
-
-postRoutes.delete('/testing/all-data', authMiddleware, (req:RequestWithParams<PostParams>, res:Response) => {
-    db.posts.length = 0;
-    return res.sendStatus(204);
 })
