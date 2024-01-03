@@ -1,31 +1,31 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.db = void 0;
-exports.db = {
-    videos: [{
-            id: 1,
-            title: "string",
-            author: "string",
-            canBeDownloaded: true,
-            minAgeRestriction: null,
-            createdAt: "2023-12-08T09:28:28.412Z",
-            publicationDate: "2023-12-08T09:28:28.412Z",
-            availableResolutions: [
-                "P144"
-            ]
-        }],
-    blogs: [{
-            id: "string",
-            name: "string",
-            description: "string",
-            websiteUrl: "string"
-        }],
-    posts: [{
-            id: "string",
-            title: "string",
-            shortDescription: "string",
-            content: "string",
-            blogId: "string",
-            blogName: "string"
-        }]
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runDb = exports.postCollection = exports.blogCollection = void 0;
+const mongodb_1 = require("mongodb");
+const port = 80;
+const uri = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const client = new mongodb_1.MongoClient(uri);
+const database = client.db('blogs-hws');
+exports.blogCollection = database.collection('blogs');
+exports.postCollection = database.collection('posts');
+const runDb = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield client.connect();
+        console.log('Client connected to Db');
+        console.log(`Listen on port ${port}`);
+    }
+    catch (err) {
+        console.log('${err}');
+        yield client.close;
+    }
+});
+exports.runDb = runDb;
