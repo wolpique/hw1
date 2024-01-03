@@ -1,39 +1,30 @@
-import { BlogType } from "../types/blog/output"
-import { PostType } from "../types/post/output"
-import { VideoType } from "../types/video/output"
+import { MongoClient } from "mongodb"
+import {BlogDBType} from "../models/blog/blog_db/blog_db_type"
+import {PostDBType } from "../models/post/post_db/post_db_type"
 
-type DBType = {
-  videos: VideoType[],
-  blogs: BlogType[]
-  posts: PostType[]
 
+const port = 80;
+
+const uri = process.env.MONGO_URI  || 'mongodb://localhost:27017'
+
+const client  =new MongoClient(uri)
+
+const database = client.db('blogs-hws')
+
+export const blogCollection = database.collection<BlogDBType>('blogs')
+
+export const postCollection = database.collection<PostDBType>('posts')
+
+export const runDb = async () => {
+  try {
+    await client.connect()
+    console.log('Client connected to Db')
+    console.log(`Listen on port ${port}`);
+
+  }catch (err) {
+    console.log('${err}')
+    await client.close
+  }
 }
 
-export const db:DBType  = {
-     videos: [{
-            id: 1,
-            title: "string",
-            author: "string",
-            canBeDownloaded: true,
-            minAgeRestriction: null,
-            createdAt: "2023-12-08T09:28:28.412Z",
-            publicationDate: "2023-12-08T09:28:28.412Z",
-            availableResolutions: [
-              "P144"
-            ]
-        }],
-        blogs: [{
-          id: "string",
-          name: "string",
-          description: "string",
-          websiteUrl: "string"
-        }],
-        posts: [{
-            id: "string",
-            title: "string",
-            shortDescription: "string",
-            content: "string",
-            blogId: "string",
-            blogName: "string"
-          }]
-}
+

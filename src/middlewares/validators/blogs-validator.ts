@@ -1,5 +1,5 @@
 import {body} from "express-validator";
-import { inputModelValidation } from "../middlewares/inputModel/input-model-validation";
+import { inputModelValidation } from "../inputModel/input-model-validation";
 
 const nameValidation = body('name').isString().trim().isLength({min:1, max:15}).withMessage('Incorrect name!')
 

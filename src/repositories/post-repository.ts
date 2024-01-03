@@ -1,46 +1,54 @@
-import { db } from "../db/db";
-import { PostType } from "../types/post/output";
+import { ObjectId, WithId } from "mongodb";
+import { postCollection } from "../db/db";
+import { OutputPostType } from "../models/post/output/post.output.models";
+import { postMapper } from "../models/post/mappers/mappers";
+import { PostDBType } from "../models/post/post_db/post_db_type";
 
 export class PostRepository {
     
-    static getAllPosts() {
-        return db.posts
+    static async getAllPosts(): Promise<OutputPostType[]> {
+        const posts = await postCollection.find({}).toArray()
+        return posts.map(postMapper)
     }
 
-    static getPostById(id:string) {
-        const post = db.posts.find(p => p.id === id)
+    static async getPostById(id:string): Promise<OutputPostType | null > {
+        const post = await postCollection.findOne({_id: new ObjectId(id)})
 
         if(!post) {
             return null
         }
-        return post
+        return postMapper(post)
+
     }
 
-    static createPost (createdPost: PostType) {
-        db.posts.push(createdPost)
-        return createdPost
-    }
+    static async createPost (createdPost: PostDBType): Promise<OutputPostType> {
+        const post = await postCollection.insertOne({...createdPost})
+        return {
+            ...createdPost,
+            id: post.insertedId.toString()
 
-    static updatePost (updatedPost: PostType) {
-        const index = db.posts.findIndex(p => p.id === updatedPost.id)
-        
-        if (index === -1) {
-           return false
-        } 
 
-        db.posts.splice(index, 1, updatedPost)
-
-        return true
-    }
-
-    static deletePostById (id: string) : boolean {
-        const index = db.posts.findIndex(p => p.id === id)
-
-        if (index !== -1) {
-            db.posts.splice(index, 1)
-            return true
-        }else{
-            return false
         }
+    }
+
+    static async updatePost (id: string, updatedPost: PostDBType): Promise<boolean> {
+        const post = await postCollection.updateOne({_id: new ObjectId(id)}, { 
+        $set: {
+            title: updatedPost.title,
+            shortDescription: updatedPost.shortDescription,
+            content: updatedPost.content,
+            blogId: updatedPost.blogId
+        }
+        }) 
+
+        return !!post.matchedCount
+
+    }
+
+    static async deletePostById (id: string): Promise<boolean> {
+        const post = await postCollection.deleteOne({_id: new ObjectId(id)})
+
+        return !!post.deletedCount
+
     }
 } 
