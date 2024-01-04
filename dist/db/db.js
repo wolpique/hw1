@@ -13,7 +13,7 @@ exports.runDb = exports.postCollection = exports.blogCollection = void 0;
 const mongodb_1 = require("mongodb");
 const port = 80;
 const uri = process.env.MONGO_URL; //|| 'mongodb://localhost:27017'
-const client = new mongodb_1.MongoClient(uri);
+const client = new mongodb_1.MongoClient("mongodb+srv://pomidorkartoshka:Googledoodle123@cluster0.q2mmgvv.mongodb.net/?retryWrites=true&w=majority");
 const database = client.db('blogs-hws');
 exports.blogCollection = database.collection('blogs');
 exports.postCollection = database.collection('posts');
@@ -24,7 +24,7 @@ const runDb = () => __awaiter(void 0, void 0, void 0, function* () {
         //console.log(`Listen on port ${port}`);
     }
     catch (err) {
-        console.log('${err}');
+        console.log(err);
         yield client.close();
     }
 });

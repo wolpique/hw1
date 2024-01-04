@@ -7,7 +7,7 @@ const port = 80;
 
 const uri = process.env.MONGO_URL //|| 'mongodb://localhost:27017'
 
-const client  =new MongoClient(uri!)
+const client  =new MongoClient("mongodb+srv://pomidorkartoshka:Googledoodle123@cluster0.q2mmgvv.mongodb.net/?retryWrites=true&w=majority")
 
 const database = client.db('blogs-hws')
 
@@ -23,7 +23,7 @@ export const runDb = async () => {
     //console.log(`Listen on port ${port}`);
 
   }catch (err) {
-    console.log('${err}')
+    console.log(err)
     await client.close()
   }
 }
