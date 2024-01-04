@@ -9,5 +9,5 @@ testingRoutes.delete('/all-data', async (req: RequestWithParams<BlogParams>, res
     //await database.dropDatabase()
     await blogCollection.deleteMany({})
     await postCollection.deleteMany({})
-    return res.sendStatus(404);
+    return res.sendStatus(204);
 })

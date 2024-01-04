@@ -17,5 +17,5 @@ exports.testingRoutes.delete('/all-data', (req, res) => __awaiter(void 0, void 0
     //await database.dropDatabase()
     yield db_1.blogCollection.deleteMany({});
     yield db_1.postCollection.deleteMany({});
-    return res.sendStatus(404);
+    return res.sendStatus(204);
 }));

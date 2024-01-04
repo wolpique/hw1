@@ -21,11 +21,11 @@ const runDb = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield client.connect();
         console.log('Client connected to Db');
-        console.log(`Listen on port ${port}`);
+        //console.log(`Listen on port ${port}`);
     }
     catch (err) {
         console.log('${err}');
-        yield client.close;
+        yield client.close();
     }
 });
 exports.runDb = runDb;
