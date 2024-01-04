@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runDb = exports.postCollection = exports.blogCollection = void 0;
 const mongodb_1 = require("mongodb");
 const port = 80;
-const uri = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const uri = process.env.MONGO_URL; //|| 'mongodb://localhost:27017'
 const client = new mongodb_1.MongoClient(uri);
 const database = client.db('blogs-hws');
 exports.blogCollection = database.collection('blogs');
