@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("./db/db");
 const settings_1 = require("./settings");
-const port = 80;
+const port = 3000;
 settings_1.app.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, db_1.runDb)();
     console.log(`Listen on port ${port}`);

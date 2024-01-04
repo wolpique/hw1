@@ -3,8 +3,6 @@ import {BlogDBType} from "../models/blog/blog_db/blog_db_type"
 import {PostDBType } from "../models/post/post_db/post_db_type"
 
 
-const port = 80;
-
 const uri = process.env.MONGO_URL //|| 'mongodb://localhost:27017'
 
 const client  =new MongoClient("mongodb+srv://pomidorkartoshka:Googledoodle123@cluster0.q2mmgvv.mongodb.net/?retryWrites=true&w=majority")
