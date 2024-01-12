@@ -31,8 +31,8 @@ class PostRepository {
             const pagesCount = Math.ceil(totalCount / +pageSize);
             return {
                 pagesCount,
-                page: pageNumber,
-                pageSize,
+                page: +pageNumber,
+                pageSize: +pageSize,
                 totalCount,
                 items: posts.map(mappers_1.postMapper)
             };
