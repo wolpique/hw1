@@ -14,10 +14,28 @@ const mongodb_1 = require("mongodb");
 const db_1 = require("../db/db");
 const mappers_1 = require("../models/post/mappers/mappers");
 class PostRepository {
-    static getAllPosts() {
+    static getAllPosts(sortData) {
+        var _a, _b, _c, _d;
         return __awaiter(this, void 0, void 0, function* () {
-            const posts = yield db_1.postCollection.find({}).toArray();
-            return posts.map(mappers_1.postMapper);
+            const pageNumber = (_a = sortData.pageNumber) !== null && _a !== void 0 ? _a : 1;
+            const pageSize = (_b = sortData.pageSize) !== null && _b !== void 0 ? _b : 10;
+            const sortBy = (_c = sortData.sortBy) !== null && _c !== void 0 ? _c : 'createdAt';
+            const sortDirection = (_d = sortData.sortDirection) !== null && _d !== void 0 ? _d : 'desc';
+            const posts = yield db_1.postCollection
+                .find({})
+                .sort(sortBy, sortDirection)
+                .skip((+pageNumber - 1) * +pageSize)
+                .limit(+pageSize)
+                .toArray();
+            const totalCount = yield db_1.postCollection.countDocuments();
+            const pagesCount = Math.ceil(totalCount / +pageSize);
+            return {
+                pagesCount,
+                page: pageNumber,
+                pageSize,
+                totalCount,
+                items: posts.map(mappers_1.postMapper)
+            };
         });
     }
     static getPostById(id) {

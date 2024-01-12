@@ -18,7 +18,13 @@ const blog_repository_1 = require("../repositories/blog-repository");
 const mongodb_1 = require("mongodb");
 exports.postRoutes = (0, express_1.Router)({});
 exports.postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const posts = yield post_repository_1.PostRepository.getAllPosts();
+    const sortData = {
+        pageNumber: req.query.pageNumber,
+        pageSize: req.query.pageSize,
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+    };
+    const posts = yield post_repository_1.PostRepository.getAllPosts(sortData);
     return res.send(posts);
 }));
 exports.postRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -33,20 +39,29 @@ exports.postRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
     return res.send(post);
 }));
 exports.postRoutes.post('/', auth_middleware_1.authMiddleware, (0, post_validator_1.postValidation)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { title, shortDescription, content, blogId, blogName } = req.body;
+    let { title, shortDescription, content, blogId } = req.body;
+    const blog = yield blog_repository_1.BlogRepository.getBlogById(blogId);
+    if (!blog) {
+        return res.sendStatus(404);
+    }
     const newPost = {
         title,
         shortDescription,
         content,
         blogId,
-        blogName,
+        blogName: blog.name,
         createdAt: new Date().toISOString()
     };
-    const createdPost = yield post_repository_1.PostRepository.createPost(newPost);
-    return res.status(201).send(createdPost);
+    const createPost = yield post_repository_1.PostRepository.createPost(newPost);
+    return res.status(201).send(createPost);
 }));
 exports.postRoutes.put('/:id', auth_middleware_1.authMiddleware, (0, post_validator_1.postValidation)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
+    let { title, shortDescription, content, blogId } = req.body;
+    const blog = yield blog_repository_1.BlogRepository.getBlogById(blogId);
+    if (!blog) {
+        return res.sendStatus(404);
+    }
     const post = yield post_repository_1.PostRepository.getPostById(id);
     if (!post) {
         return res.sendStatus(404);
@@ -54,8 +69,6 @@ exports.postRoutes.put('/:id', auth_middleware_1.authMiddleware, (0, post_valida
     if (!mongodb_1.ObjectId.isValid(id)) {
         return res.sendStatus(404);
     }
-    let { title, shortDescription, content, blogId } = req.body;
-    const blog = yield blog_repository_1.BlogRepository.getBlogById(blogId);
     const updatedPost = Object.assign(Object.assign({}, post), { title,
         shortDescription,
         content, blogId: blogId, createdAt: new Date().toISOString() });

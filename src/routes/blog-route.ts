@@ -1,17 +1,30 @@
 import { Router, Request, Response } from "express";
 import { BlogRepository } from "../repositories/blog-repository";
-//import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams } from "../types/common";
 import { BlogBody, BlogParams } from "../models/blog/input/blog.input.models";
 import { authMiddleware } from "../middlewares/auth/auth-middleware";
 import { blogValidation } from "../middlewares/validators/blogs-validator";
 import { ObjectId } from "mongodb";
 import { OutputBlogType } from "../models/blog/output/blog.output.models";
-import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams } from "../models/common/common";
+import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams, RequestWithParamsAndQuery, RequestWithQuery } from "../models/common/common";
+import { QueryBlogInputModel, QueryPostByBlogIdInputModel } from "../models/blog/input/blog.input.query.models";
+import { CreatePostBlogModel } from "../models/blog/input/create.blog.input.models";
+import { PostRepository } from "../repositories/post-repository";
+import { OutputPostType } from "../models/post/output/post.output.models";
+import { OutputPageBlogType } from "../models/blog/output/pages.blog.output.models";
+import { OutputPagePostType } from "../models/post/output/pages.post.output.models";
+import { postForBlogByIdValidation, postValidation } from "../middlewares/validators/post-validator";
 
 export const blogRoutes = Router({})
 
-blogRoutes.get('/', async (req: Request, res:Response) => {
-    const blogs = await BlogRepository.getAllBlogs();
+blogRoutes.get('/', async (req: RequestWithQuery<QueryBlogInputModel>, res:Response<OutputPageBlogType>) => {
+    const sortData = {
+        searchNameTerm: req.query.searchNameTerm,
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+        pageNumber: req.query.pageNumber,
+        pageSize: req.query.pageSize
+    }
+    const blogs = await BlogRepository.getAllBlogs(sortData);
 
     return res.send(blogs)
 })
@@ -30,19 +43,73 @@ blogRoutes.get('/:id', async (req: RequestWithParams<BlogParams>, res:Response) 
     return res.send(blog)
 })
 
+blogRoutes.get('/:id/posts', async (req: RequestWithParamsAndQuery<BlogParams, QueryPostByBlogIdInputModel>, res:Response<OutputPagePostType>) => {
+    const id = req.params.id
+
+    const blogs = await BlogRepository.getBlogById(id);
+
+    if (!blogs){
+        res.sendStatus(404)
+        return
+    }
+
+
+    if (!ObjectId.isValid(id)){
+        return res.sendStatus(404)
+    }
+
+    const sortData = {
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+        pageNumber: req.query.pageNumber,
+        pageSize: req.query.pageSize
+    }
+    const posts = await BlogRepository.getPostsByBlogId(id, sortData)
+
+    return res.send(posts)
+})
+
 blogRoutes.post('/', authMiddleware, blogValidation(), async (req: RequestWithBody<BlogBody>, res:Response<OutputBlogType>) => {
-    let {name, description, websiteUrl, isMembership} = req.body
+    let {name, description, websiteUrl} = req.body
     const newBlog = {
         name,
         description,
         websiteUrl,
-        isMembership,
+        isMembership: false,
         createdAt: new Date().toISOString()
     }
+ 
     
     const createBlog = await BlogRepository.createBlog(newBlog);
 
     return res.status(201).send(createBlog)
+
+})
+
+blogRoutes.post('/:id/posts', authMiddleware, postForBlogByIdValidation(), async (req: RequestWithBodyAndParams<{id:string}, CreatePostBlogModel>, res:Response<OutputPostType>) => {
+    const title = req.body.title
+    const shortDescription = req.body.shortDescription
+    const content = req.body.content
+
+    const blogId = req.params.id
+
+
+    const blogs = await BlogRepository.getBlogById(blogId);
+
+    if (!blogs){
+        res.sendStatus(404)
+        return
+    }
+
+    const createdPostId = await BlogRepository.createPostToBlog(blogId, {title, shortDescription, content})
+   
+    const post = await PostRepository.getPostById(createdPostId.toString())
+
+    if (!post){
+        return res.sendStatus(404)
+    }
+
+    return res.status(201).send(post)
 
 })
 

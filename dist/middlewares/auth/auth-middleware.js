@@ -5,11 +5,13 @@ const login = 'admin';
 const password = 'qwerty';
 const authMiddleware = (req, res, next) => {
     const auth = req.headers['authorization'];
+    console.log(auth, req.headers);
     if (!auth) {
         res.sendStatus(401);
         return;
     }
     const [basic, token] = auth.split(" ");
+    console.log("Basic", basic);
     if (basic !== "Basic") {
         res.sendStatus(401);
         return;

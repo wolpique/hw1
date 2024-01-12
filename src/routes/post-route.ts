@@ -7,12 +7,20 @@ import { postValidation } from "../middlewares/validators/post-validator";
 import { BlogRepository } from "../repositories/blog-repository";
 import { ObjectId } from "mongodb";
 import { OutputPostType } from "../models/post/output/post.output.models";
-import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams } from "../models/common/common";
+import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams, RequestWithQuery } from "../models/common/common";
+import { QueryPostInputModel } from "../models/post/input/post.input.query.models";
+import { OutputPagePostType } from "../models/post/output/pages.post.output.models";
 
 export const postRoutes = Router({})
 
-postRoutes.get('/', async (req: Request, res:Response) => {
-    const posts = await PostRepository.getAllPosts()
+postRoutes.get('/', async (req: RequestWithQuery<QueryPostInputModel>, res:Response<OutputPagePostType>) => {
+    const sortData = {
+        pageNumber: req.query.pageNumber,
+        pageSize: req.query.pageSize,
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+    }
+    const posts = await PostRepository.getAllPosts(sortData)
 
     return res.send(posts)
 
@@ -33,25 +41,38 @@ postRoutes.get('/:id', async (req: RequestWithParams<PostParams>, res:Response) 
 
 postRoutes.post('/', authMiddleware, postValidation(), async (req:RequestWithBody<PostBody>, res: Response<OutputPostType>) => {
 
-    let {title, shortDescription, content, blogId, blogName} = req.body
+    let {title, shortDescription, content, blogId} = req.body
+
+    const blog = await BlogRepository.getBlogById(blogId)
+    if(!blog){
+       return res.sendStatus(404)
+    }
 
     const newPost = {
         title,
         shortDescription,
         content,
         blogId,
-        blogName,
+        blogName: blog.name,
         createdAt: new Date().toISOString()
 
     }
 
-    const createdPost = await PostRepository.createPost(newPost)
-    return res.status(201).send(createdPost)
+    const createPost = await PostRepository.createPost(newPost)
+    return res.status(201).send(createPost)
 
 })
 
 postRoutes.put('/:id', authMiddleware, postValidation(), async (req:RequestWithBodyAndParams<PostParams, PostBody>, res: Response) => {
     const id = req.params.id
+   
+    let {title, shortDescription, content, blogId} = req.body
+    
+   const blog = await BlogRepository.getBlogById(blogId)
+    if(!blog){
+       return res.sendStatus(404)
+    }
+   
     const post = await PostRepository.getPostById(id)
 
     if(!post) {
@@ -60,10 +81,7 @@ postRoutes.put('/:id', authMiddleware, postValidation(), async (req:RequestWithB
 
     if (!ObjectId.isValid(id)){
         return res.sendStatus(404)
-    }
-    let {title, shortDescription, content, blogId} = req.body
-
-    const blog = await BlogRepository.getBlogById(blogId)
+    }   
 
     const updatedPost = {
         ...post,

@@ -26,3 +26,4 @@ const inputModelValidation = (req, res, next) => {
     return next();
 };
 exports.inputModelValidation = inputModelValidation;
+//validator for objectId -> inputModelValidation 404 if !blogId 

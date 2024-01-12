@@ -24,6 +24,7 @@ export const inputModelValidation = (req:Request, res: Response, next: NextFunct
     }
     return next()
 }
+//validator for objectId -> inputModelValidation 404 if !blogId 
 
 
 

@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb"
-import {BlogDBType} from "../models/blog/blog_db/blog_db_type"
-import {PostDBType } from "../models/post/post_db/post_db_type"
+import {BlogDBType} from "../models/blog/blog_db/blog-db-type"
+import {PostDBType } from "../models/post/post_db/post-db-type"
 
 
 const uri = process.env.MONGO_URL //|| 'mongodb://localhost:27017'

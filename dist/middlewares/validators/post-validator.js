@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postValidation = void 0;
+exports.postForBlogByIdValidation = exports.postValidation = void 0;
 const express_validator_1 = require("express-validator");
 const blog_repository_1 = require("../../repositories/blog-repository");
 const input_model_validation_1 = require("../inputModel/input-model-validation");
@@ -23,5 +23,15 @@ const blogIdValidation = (0, express_validator_1.body)('blogId').isString().trim
     }
     return true;
 })).withMessage("Incorrect blogId");
+const blogIdInParamValidation = (0, express_validator_1.param)('id').isString().trim().custom((value) => __awaiter(void 0, void 0, void 0, function* () {
+    const blog = yield blog_repository_1.BlogRepository.getBlogById(value);
+    console.log(blog);
+    if (!blog) {
+        throw new Error("Incorrect blogId");
+    }
+    //return true
+})).withMessage("Incorrect blogId");
 const postValidation = () => [titleValidation, shortDescriptionValidation, contentValidation, blogIdValidation, input_model_validation_1.inputModelValidation];
 exports.postValidation = postValidation;
+const postForBlogByIdValidation = () => [titleValidation, shortDescriptionValidation, contentValidation, input_model_validation_1.inputModelValidation];
+exports.postForBlogByIdValidation = postForBlogByIdValidation;

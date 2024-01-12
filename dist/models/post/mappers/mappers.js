@@ -8,7 +8,8 @@ const postMapper = (postDb) => {
         shortDescription: postDb.shortDescription,
         content: postDb.content,
         blogId: postDb.blogId,
-        blogName: postDb.blogName
+        blogName: postDb.blogName,
+        createdAt: postDb.createdAt
     };
 };
 exports.postMapper = postMapper;

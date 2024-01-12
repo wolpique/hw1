@@ -9,23 +9,28 @@ const chai = require('chai')
 const expect = chai.expect
 
 describe ('/blogs', () => {
-
-    it ('should return blog by id', async () => {
-        const res = await request(app).get('/blogs/1');
-        expect(res.status).to.equal(200);
-
-        const nonExistingResponse = await request(app).get('/blogs/999')
-        expect(nonExistingResponse.status).to.equal(404)    })
-
     it ('should create a new blog', async () => {
         const newBlog = {
             name: "Wolpik blog",
             description: "My name is Wolpik",
-            websiteUrl: "some URL",
+            websiteUrl: "test@test.com",
+            isMembership: false,
+
         }
-        const res = await request(app).post('/blogs').send(newBlog)
+        const res = await request(app).post('/blogs').send(newBlog).set('Authorization', "Basic admin:qwerty")
         expect(res.status).to.equal(201)
     })
+
+    it ('should return blog by id', async () => {
+        const responseBlogs = await request(app).get('/blogs')
+        const blogId = responseBlogs.body[0].id
+        const res = await request(app).get(`/blogs/${blogId}`); //шаблонные строки
+        expect(res.status).to.equal(200);
+
+        const nonExistingResponse = await request(app).get('/blogs/551137c2f9e1fac808a5f572')
+        expect(nonExistingResponse.status).to.equal(404)    })
+
+   
 
     it ('should update an existing blog by id', async() => {
         const updateBlog = {
