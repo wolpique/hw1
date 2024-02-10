@@ -15,6 +15,7 @@ const db_1 = require("../db/db");
 exports.testingRoutes = (0, express_1.Router)({});
 exports.testingRoutes.delete('/all-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //await database.dropDatabase()
+    yield db_1.usersCollection.deleteMany({});
     yield db_1.blogCollection.deleteMany({});
     yield db_1.postCollection.deleteMany({});
     return res.sendStatus(204);

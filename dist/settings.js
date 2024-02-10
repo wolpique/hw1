@@ -8,9 +8,17 @@ const express_1 = __importDefault(require("express"));
 const blog_route_1 = require("./routes/blog-route");
 const post_route_1 = require("./routes/post-route");
 const testing_route_1 = require("./routes/testing-route");
+const users_route_1 = require("./routes/users-route");
+const auth_route_1 = require("./routes/auth-route");
+const comments_route_1 = require("./routes/comments-route");
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 exports.app = (0, express_1.default)();
 exports.app.use(express_1.default.json());
+exports.app.use((0, cookie_parser_1.default)());
 //app.use('/tests', videoRoutes)
+exports.app.use('/auth', auth_route_1.authRoute);
+exports.app.use('/users', users_route_1.usersRoute);
 exports.app.use('/blogs', blog_route_1.blogRoutes);
 exports.app.use('/posts', post_route_1.postRoutes);
+exports.app.use('/comments', comments_route_1.commentsRoute);
 exports.app.use('/testing', testing_route_1.testingRoutes);

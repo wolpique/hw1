@@ -4,3 +4,4 @@ export type QueryPostInputModel = {
     sortBy?: string,
     sortDirection?: 'asc' | 'desc'
 }
+

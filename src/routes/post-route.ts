@@ -1,15 +1,22 @@
 import { Router,Request,Response } from "express";
 import { PostRepository } from "../repositories/post-repository";
-import { authMiddleware } from "../middlewares/auth/auth-middleware";
+import { authMiddleware, bearerAuth } from "../middlewares/auth/auth-middleware";
 //import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams } from "../types/common";
 import { PostBody, PostParams } from "../models/post/input/post.input.models";
 import { postValidation } from "../middlewares/validators/post-validator";
 import { BlogRepository } from "../repositories/blog-repository";
 import { ObjectId } from "mongodb";
 import { OutputPostType } from "../models/post/output/post.output.models";
-import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams, RequestWithQuery } from "../models/common/common";
+import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams, RequestWithParamsAndQuery, RequestWithQuery } from "../models/common/common";
 import { QueryPostInputModel } from "../models/post/input/post.input.query.models";
 import { OutputPagePostType } from "../models/post/output/pages.post.output.models";
+import { CommentsBody, CommentsParams } from "../models/comments/input/comment.input.models";
+import { QueryCommentByPostIdInputModel } from "../models/comments/comments-db/comment.query.models";
+import { commentsRepository } from "../repositories/comments-repository";
+import { commentValidator } from "../middlewares/validators/comments-validator";
+import { OutputCommentType } from "../models/comments/output/comments.output.model";
+import { log } from "console";
+import { CommentsDBType } from "../models/comments/comments-db/comments-db-type";
 
 export const postRoutes = Router({})
 
@@ -37,6 +44,65 @@ postRoutes.get('/:id', async (req: RequestWithParams<PostParams>, res:Response) 
         return res.sendStatus(404)
     }
     return res.send(post)
+})
+
+postRoutes.get('/:id/comments', async (req:RequestWithParamsAndQuery<CommentsParams, QueryCommentByPostIdInputModel>, res:Response) => {
+    const id = req.params.id
+    const post = await PostRepository.getPostById(id)
+
+    if (!post){
+        res.sendStatus(404)
+        return
+    }
+    const sortData = {
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+        pageNumber: req.query.pageNumber,
+        pageSize: req.query.pageSize
+    }
+
+    const comment = await PostRepository.getCommentById(id, sortData)
+
+    return res.send(comment)
+})
+
+
+postRoutes.post('/:id/comments', bearerAuth, commentValidator(), async (req: RequestWithBodyAndParams<CommentsParams,CommentsBody>, res: Response) => {
+    const postId = req.params.id
+    const content = req.body.content
+
+    const {id, login } = req.user
+
+    const post = await PostRepository.getPostById(postId)
+
+    if (!post) {
+        return res.sendStatus(404)
+    }
+
+    const newComment: CommentsDBType = {
+        content,
+        commentatorInfo: {
+            userId: id,
+            userLogin: login
+        },
+        postId: post.id!,
+        createdAt: new Date().toISOString()
+    }
+
+    const createdCommentId = await commentsRepository.createComment(newComment)
+
+    if(!createdCommentId){
+        return res.sendStatus(404)
+    }
+
+    const comment = await commentsRepository.getCommentById(createdCommentId)
+
+    if (!comment) {
+        return res.sendStatus(404)
+    }
+
+    return res.status(201).send(comment)
+
 })
 
 postRoutes.post('/', authMiddleware, postValidation(), async (req:RequestWithBody<PostBody>, res: Response<OutputPostType>) => {

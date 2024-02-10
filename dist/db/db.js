@@ -9,13 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.runDb = exports.postCollection = exports.blogCollection = void 0;
+exports.runDb = exports.emailsModel = exports.tokensCollection = exports.commentCollection = exports.usersCollection = exports.postCollection = exports.blogCollection = void 0;
 const mongodb_1 = require("mongodb");
 const uri = process.env.MONGO_URL; //|| 'mongodb://localhost:27017'
 const client = new mongodb_1.MongoClient("mongodb+srv://pomidorkartoshka:Googledoodle123@cluster0.q2mmgvv.mongodb.net/?retryWrites=true&w=majority");
 const database = client.db('blogs-hws');
 exports.blogCollection = database.collection('blogs');
 exports.postCollection = database.collection('posts');
+exports.usersCollection = database.collection('users');
+exports.commentCollection = database.collection('comments');
+exports.tokensCollection = database.collection('tokens');
+exports.emailsModel = database.collection('emails');
 const runDb = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield client.connect();

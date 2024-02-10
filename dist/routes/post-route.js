@@ -16,6 +16,8 @@ const auth_middleware_1 = require("../middlewares/auth/auth-middleware");
 const post_validator_1 = require("../middlewares/validators/post-validator");
 const blog_repository_1 = require("../repositories/blog-repository");
 const mongodb_1 = require("mongodb");
+const comments_repository_1 = require("../repositories/comments-repository");
+const comments_validator_1 = require("../middlewares/validators/comments-validator");
 exports.postRoutes = (0, express_1.Router)({});
 exports.postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const sortData = {
@@ -37,6 +39,49 @@ exports.postRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
         return res.sendStatus(404);
     }
     return res.send(post);
+}));
+exports.postRoutes.get('/:id/comments', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const id = req.params.id;
+    const post = yield post_repository_1.PostRepository.getPostById(id);
+    if (!post) {
+        res.sendStatus(404);
+        return;
+    }
+    const sortData = {
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+        pageNumber: req.query.pageNumber,
+        pageSize: req.query.pageSize
+    };
+    const comment = yield post_repository_1.PostRepository.getCommentById(id, sortData);
+    return res.send(comment);
+}));
+exports.postRoutes.post('/:id/comments', auth_middleware_1.bearerAuth, (0, comments_validator_1.commentValidator)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const postId = req.params.id;
+    const content = req.body.content;
+    const { id, login } = req.user;
+    const post = yield post_repository_1.PostRepository.getPostById(postId);
+    if (!post) {
+        return res.sendStatus(404);
+    }
+    const newComment = {
+        content,
+        commentatorInfo: {
+            userId: id,
+            userLogin: login
+        },
+        postId: post.id,
+        createdAt: new Date().toISOString()
+    };
+    const createdCommentId = yield comments_repository_1.commentsRepository.createComment(newComment);
+    if (!createdCommentId) {
+        return res.sendStatus(404);
+    }
+    const comment = yield comments_repository_1.commentsRepository.getCommentById(createdCommentId);
+    if (!comment) {
+        return res.sendStatus(404);
+    }
+    return res.status(201).send(comment);
 }));
 exports.postRoutes.post('/', auth_middleware_1.authMiddleware, (0, post_validator_1.postValidation)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { title, shortDescription, content, blogId } = req.body;

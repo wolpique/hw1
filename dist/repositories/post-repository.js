@@ -13,6 +13,7 @@ exports.PostRepository = void 0;
 const mongodb_1 = require("mongodb");
 const db_1 = require("../db/db");
 const mappers_1 = require("../models/post/mappers/mappers");
+const mappers_postcomment_1 = require("../models/post/mappers/mappers.postcomment");
 class PostRepository {
     static getAllPosts(sortData) {
         var _a, _b, _c, _d;
@@ -45,6 +46,31 @@ class PostRepository {
                 return null;
             }
             return (0, mappers_1.postMapper)(post);
+        });
+    }
+    static getCommentById(postId, sortData) {
+        var _a, _b, _c, _d;
+        return __awaiter(this, void 0, void 0, function* () {
+            const sortBy = (_a = sortData.sortBy) !== null && _a !== void 0 ? _a : 'createdAt';
+            const sortDirection = (_b = sortData.sortDirection) !== null && _b !== void 0 ? _b : 'desc';
+            const pageNumber = (_c = sortData.pageNumber) !== null && _c !== void 0 ? _c : 1;
+            const pageSize = (_d = sortData.pageSize) !== null && _d !== void 0 ? _d : 10;
+            const posts = yield db_1.commentCollection
+                .find({ postId: postId })
+                .sort(sortBy, sortDirection)
+                .skip((+pageNumber - 1) * +pageSize)
+                .limit(+pageSize)
+                .toArray();
+            const totalCount = yield db_1.commentCollection
+                .countDocuments({ postId: postId });
+            const pagesCount = Math.ceil(totalCount / +pageSize);
+            return {
+                pagesCount,
+                page: +pageNumber,
+                pageSize: +pageSize,
+                totalCount,
+                items: posts.map(mappers_postcomment_1.postCommentMapper)
+            };
         });
     }
     static createPost(createdPost) {
