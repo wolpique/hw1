@@ -6,6 +6,7 @@ import { OutputPageUsersType } from "../models/users/output/users.output.query.m
 import { UsersDBType } from "../models/users/users_db/users-db-type";
 import { OutputUsersType } from "../models/users/output/users.output.model";
 import { EmailResendingType } from "../models/email/email_db";
+//import { TokensDBType } from "../models/tokens/token_db/tokens-db-type";
 
 export class UsersRepository {
 
@@ -36,17 +37,6 @@ export class UsersRepository {
             filter['$or']?.push({});
         }
 
-        // if (searchLoginTerm) {
-        //     filter = {
-        //         login: {$regex: searchLoginTerm, $options: 'i'}
-        //     }
-        // }
-        // if (searchEmailTerm) {
-        //     filter = {
-        //         email: {$regex: searchEmailTerm, $options: 'i'}
-        //     }
-        // }
-
         const users = await usersCollection
             .find(filter)
             .sort(sortBy, sortDirection)
@@ -66,8 +56,9 @@ export class UsersRepository {
         }
     }
 
-    static async findUserById(id: ObjectId): Promise<OutputUsersType | null> {
-        const user = await usersCollection.findOne({ _id: id })
+    static async findUserById(id: string): Promise<OutputUsersType | null> {
+        const id_type = new ObjectId(id)
+        const user = await usersCollection.findOne({ _id: id_type })
 
         if (!user) {
             return null
@@ -76,7 +67,7 @@ export class UsersRepository {
     }
 
     static async findUserByRefreshToken(refreshToken: string) {
-        const user = await usersCollection.findOne({ 'rToken.refreshToken': refreshToken })
+        const user = await usersCollection.findOne({ 'refreshToken': refreshToken })
         if (!user) {
             return null
         }
@@ -97,7 +88,6 @@ export class UsersRepository {
     }
 
     static async updateEmailConfirmation(email: string, updated: UsersDBType) {
-        console.log(updated.emailConfirmation.code)
         let updateEmail = await usersCollection.updateOne({ 'accountData.email': email }, {
             $set: {
                 'emailConfirmation.code': updated.emailConfirmation.code,
@@ -147,18 +137,18 @@ export class UsersRepository {
         return !!user.deletedCount
     }
 
-    static async updateRefreshToken(id: ObjectId, updated: UsersDBType): Promise<boolean> {
-        try {
-            const updateToken = await usersCollection.updateOne({ _id: id }, {
-                $set: { 'rToken.refreshToken': updated.rToken.refreshToken }
-            }
-            )
-            return updateToken.modifiedCount > 0;
-        } catch (error) {
-            console.error('Error deleting refresh token:', error);
-            return false
-        }
-    }
+    // static async updateRefreshToken(id: ObjectId, updated: TokensDBType): Promise<boolean> {
+    //     try {
+    //         const updateToken = await usersCollection.updateOne({ _id: id }, {
+    //             $set: { 'refreshToken': updated.refreshToken }
+    //         }
+    //         )
+    //         return updateToken.modifiedCount > 0;
+    //     } catch (error) {
+    //         console.error('Error deleting refresh token:', error);
+    //         return false
+    //     }
+    // }
 
 
 }

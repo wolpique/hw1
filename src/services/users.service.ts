@@ -23,15 +23,12 @@ export const usersService = {
                 code: randomUUID(),
                 expirationDate: new Date()
             },
-            rToken: {
-                refreshToken: randomUUID(),
-            }
         }
 
         return UsersRepository.addNewUsers(newUser)
     },
 
-    async findUserById(id: ObjectId): Promise<OutputUsersType | null> {
+    async findUserById(id: string): Promise<OutputUsersType | null> {
         return UsersRepository.findUserById(id)
     },
 
@@ -46,6 +43,7 @@ export const usersService = {
         }
 
         const checkResult = await bcrypt.compare(password, user.accountData.password) //rename pass2
+
         if (!checkResult) {
             return null
         }

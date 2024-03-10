@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authenticate = exports.bearerAuth = exports.authMiddleware = void 0;
-const jwt_service_1 = require("../../application/jwt-service");
+const jwt_service_1 = require("../../services/jwt-service");
 const users_service_1 = require("../../services/users.service");
 const login = 'admin';
 const password = 'qwerty';
@@ -43,7 +43,7 @@ const bearerAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     if (!userId) {
         return res.sendStatus(401);
     }
-    const user = yield users_service_1.usersService.findUserById(userId);
+    const user = yield users_service_1.usersService.findUserById(userId.toString());
     if (!user) {
         return res.sendStatus(401);
     }
@@ -52,31 +52,15 @@ const bearerAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.bearerAuth = bearerAuth;
 const authenticate = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const accessToken = req.headers['authorization'];
     const refreshToken = req.cookies['refreshToken'];
-    if (!accessToken && !refreshToken) {
+    if (!refreshToken) {
         return res.status(401).send('Access denied, no token provided ');
     }
-    try {
-        if (accessToken) {
-            const decodedAccessToken = yield jwt_service_1.jwtService.verifyAccessToken(accessToken);
-            req.user = decodedAccessToken.user;
-        }
+    const decodedRefreshToken = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
+    if (!decodedRefreshToken) {
+        res.sendStatus(401);
+        return;
     }
-    catch (error) {
-        if (!refreshToken) {
-            return res.status(401).send('Access denied, refresh token is absent');
-        }
-        try {
-            const decodedRefreshToken = yield jwt_service_1.jwtService.verifyRefreshToken(refreshToken);
-            const newAccessToken = yield jwt_service_1.jwtService.generateAccessToken({ user: decodedRefreshToken.user });
-            res.header('Authorization', newAccessToken);
-            return res.send(decoded.user);
-        }
-        catch (error) {
-            return res.status(400).send('Invalid Token');
-        }
-        return next();
-    }
+    return next();
 });
 exports.authenticate = authenticate;

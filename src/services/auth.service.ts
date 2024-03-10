@@ -5,6 +5,11 @@ import { add } from 'date-fns/add'
 import { emailsManager } from '../managers/email-manager'
 import { UsersDBType } from '../models/users/users_db/users-db-type'
 import { randomUUID } from 'crypto'
+import { jwtService } from './jwt-service'
+import { cookieService } from '../application/cookies'
+import { DevicesRepository } from '../repositories/device-repository'
+import { devicesCollection } from '../db/db'
+
 
 export const authService = {
     async createUser(login: string, email: string, password: string): Promise<ObjectId | null> {
@@ -27,9 +32,6 @@ export const authService = {
                     }),
                     isConfirmed: false,
                 },
-                rToken: {
-                    refreshToken: randomUUID(),
-                }
             }
 
             const createResult = UsersRepository.createUser(user)
@@ -40,25 +42,6 @@ export const authService = {
             return null;
         }
     },
-
-    // async generateNewToken(refreshToken: string): Promise<boolean | null> {
-    //     try {
-    //         const user = await UsersRepository.findUserByRefreshToken(refreshToken)
-    //         if (!user) {
-    //             console.error('User not found for refreshToken:', refreshToken)
-    //             return null
-    //         }
-    //         if (user.rToken < new Date())
-    //             const generateRToken = await jwtService.generateRefreshToken(user)
-
-    //         const refreshedToken = await UsersRepository.updateRefreshToken(user._id,
-    //             { rToken: { refreshToken: generateRToken } })
-    //         return true;
-    //     } catch (error) {
-    //         console.error('Error generating new token:', error);
-    //         return false
-    //     }
-    // },
 
     async emailResending(email: string): Promise<boolean | null> {
         try {
@@ -88,11 +71,10 @@ export const authService = {
             console.error('Error resending email:', error);
             return null; // Return null in case of error
         }
-    },//выравнивать 
+    },
 
     async confirmEmail(code: string): Promise<boolean> {
         let user = await UsersRepository.findUserByConfirmationCode(code)
-        console.log("here")
         if (!user) {
             return false
         }
@@ -105,5 +87,24 @@ export const authService = {
         let result = await UsersRepository.updateConfirmation(user._id)
 
         return result
+    },
+
+    async loginUser(user: UsersDBType) {
+
+
+        const user_id = user!._id.toString()
+
+        const newdeviceId = new ObjectId().toString() //30-41 auth service method login? return AT RT
+
+        const accessToken = await jwtService.generateAccessToken(user_id)
+
+        const refreshToken = await jwtService.generateAndStoreRefreshToken(user_id, newdeviceId)
+
+        const decoded = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
+
+
+        //console.log('accessToken', accessToken, 'refreshToken', refreshToken, 'newdeviceId', newdeviceId, 'decoded', decoded, 'user_id', user_id)
+        return { accessToken, refreshToken, newdeviceId, decoded, user_id }
+
     }
 }

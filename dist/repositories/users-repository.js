@@ -13,6 +13,7 @@ exports.UsersRepository = void 0;
 const mongodb_1 = require("mongodb");
 const db_1 = require("../db/db");
 const mappers_1 = require("../models/users/mappers/mappers");
+//import { TokensDBType } from "../models/tokens/token_db/tokens-db-type";
 class UsersRepository {
     static getAllUsers(sortData) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
@@ -33,16 +34,6 @@ class UsersRepository {
             if (((_j = filter['$or']) === null || _j === void 0 ? void 0 : _j.length) === 0) {
                 (_k = filter['$or']) === null || _k === void 0 ? void 0 : _k.push({});
             }
-            // if (searchLoginTerm) {
-            //     filter = {
-            //         login: {$regex: searchLoginTerm, $options: 'i'}
-            //     }
-            // }
-            // if (searchEmailTerm) {
-            //     filter = {
-            //         email: {$regex: searchEmailTerm, $options: 'i'}
-            //     }
-            // }
             const users = yield db_1.usersCollection
                 .find(filter)
                 .sort(sortBy, sortDirection)
@@ -62,7 +53,8 @@ class UsersRepository {
     }
     static findUserById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield db_1.usersCollection.findOne({ _id: id });
+            const id_type = new mongodb_1.ObjectId(id);
+            const user = yield db_1.usersCollection.findOne({ _id: id_type });
             if (!user) {
                 return null;
             }
@@ -71,7 +63,7 @@ class UsersRepository {
     }
     static findUserByRefreshToken(refreshToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield db_1.usersCollection.findOne({ 'rToken.refreshToken': refreshToken });
+            const user = yield db_1.usersCollection.findOne({ 'refreshToken': refreshToken });
             if (!user) {
                 return null;
             }
@@ -92,7 +84,6 @@ class UsersRepository {
     }
     static updateEmailConfirmation(email, updated) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(updated.emailConfirmation.code);
             let updateEmail = yield db_1.usersCollection.updateOne({ 'accountData.email': email }, {
                 $set: {
                     'emailConfirmation.code': updated.emailConfirmation.code,
@@ -137,20 +128,6 @@ class UsersRepository {
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield db_1.usersCollection.deleteOne({ _id: new mongodb_1.ObjectId(id) }); // id || _id
             return !!user.deletedCount;
-        });
-    }
-    static updateRefreshToken(id, updated) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const updateToken = yield db_1.usersCollection.updateOne({ _id: id }, {
-                    $set: { 'rToken.refreshToken': updated.rToken.refreshToken }
-                });
-                return updateToken.modifiedCount > 0;
-            }
-            catch (error) {
-                console.error('Error deleting refresh token:', error);
-                return false;
-            }
         });
     }
 }

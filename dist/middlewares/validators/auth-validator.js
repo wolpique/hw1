@@ -54,7 +54,6 @@ const registrationUserLoginValidation = (0, express_validator_1.body)('login')
     .matches('^[a-zA-Z0-9_-]*$')
     .custom((login) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield db_1.usersCollection.findOne({ 'accountData.login': login });
-    console.log(user);
     if (user) {
         throw new Error('Login already exists');
     }

@@ -1,3 +1,4 @@
-export type TokensDBType = {
-    refreshToken: string
-}
+// export type TokensDBType = {
+//     refreshToken: string
+//     isValid : boolean
+// }

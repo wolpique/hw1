@@ -35,9 +35,6 @@ exports.usersService = {
                     code: (0, crypto_1.randomUUID)(),
                     expirationDate: new Date()
                 },
-                rToken: {
-                    refreshToken: (0, crypto_1.randomUUID)(),
-                }
             };
             return users_repository_1.UsersRepository.addNewUsers(newUser);
         });

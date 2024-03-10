@@ -18,5 +18,6 @@ exports.testingRoutes.delete('/all-data', (req, res) => __awaiter(void 0, void 0
     yield db_1.usersCollection.deleteMany({});
     yield db_1.blogCollection.deleteMany({});
     yield db_1.postCollection.deleteMany({});
+    yield db_1.devicesCollection.deleteMany({});
     return res.sendStatus(204);
 }));

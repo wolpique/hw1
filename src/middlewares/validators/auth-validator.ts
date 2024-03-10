@@ -47,7 +47,6 @@ const registrationUserLoginValidation = body('login')
     .matches('^[a-zA-Z0-9_-]*$')
     .custom(async (login) => {
         const user = await usersCollection.findOne({ 'accountData.login': login })
-        console.log(user)
         if (user) {
             throw new Error('Login already exists')
         } else {

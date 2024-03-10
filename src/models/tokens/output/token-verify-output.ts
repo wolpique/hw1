@@ -1,4 +1,4 @@
-export type TokenVerificationResult = {
-    isValid: boolean;
-    userId?: string;
-}
+// export type TokenVerificationResult = {
+//     isValid: boolean;
+//     userId: string;
+// }

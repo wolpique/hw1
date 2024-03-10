@@ -19,6 +19,7 @@ const users_repository_1 = require("../repositories/users-repository");
 const add_1 = require("date-fns/add");
 const email_manager_1 = require("../managers/email-manager");
 const crypto_1 = require("crypto");
+const jwt_service_1 = require("./jwt-service");
 exports.authService = {
     createUser(login, email, password) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41,9 +42,6 @@ exports.authService = {
                         }),
                         isConfirmed: false,
                     },
-                    rToken: {
-                        refreshToken: (0, crypto_1.randomUUID)(),
-                    }
                 };
                 const createResult = users_repository_1.UsersRepository.createUser(user);
                 yield email_manager_1.emailsManager.sendPasswordRecoveryMessage(email, code);
@@ -55,23 +53,6 @@ exports.authService = {
             }
         });
     },
-    // async generateNewToken(refreshToken: string): Promise<boolean | null> {
-    //     try {
-    //         const user = await UsersRepository.findUserByRefreshToken(refreshToken)
-    //         if (!user) {
-    //             console.error('User not found for refreshToken:', refreshToken)
-    //             return null
-    //         }
-    //         if (user.rToken < new Date())
-    //             const generateRToken = await jwtService.generateRefreshToken(user)
-    //         const refreshedToken = await UsersRepository.updateRefreshToken(user._id,
-    //             { rToken: { refreshToken: generateRToken } })
-    //         return true;
-    //     } catch (error) {
-    //         console.error('Error generating new token:', error);
-    //         return false
-    //     }
-    // },
     emailResending(email) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -100,11 +81,10 @@ exports.authService = {
                 return null; // Return null in case of error
             }
         });
-    }, //выравнивать 
+    },
     confirmEmail(code) {
         return __awaiter(this, void 0, void 0, function* () {
             let user = yield users_repository_1.UsersRepository.findUserByConfirmationCode(code);
-            console.log("here");
             if (!user) {
                 return false;
             }
@@ -116,6 +96,17 @@ exports.authService = {
             }
             let result = yield users_repository_1.UsersRepository.updateConfirmation(user._id);
             return result;
+        });
+    },
+    loginUser(user) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user_id = user._id.toString();
+            const newdeviceId = new mongodb_1.ObjectId().toString(); //30-41 auth service method login? return AT RT
+            const accessToken = yield jwt_service_1.jwtService.generateAccessToken(user_id);
+            const refreshToken = yield jwt_service_1.jwtService.generateAndStoreRefreshToken(user_id, newdeviceId);
+            const decoded = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
+            //console.log('accessToken', accessToken, 'refreshToken', refreshToken, 'newdeviceId', newdeviceId, 'decoded', decoded, 'user_id', user_id)
+            return { accessToken, refreshToken, newdeviceId, decoded, user_id };
         });
     }
 };

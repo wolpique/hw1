@@ -1,2 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+// export type TokensDBType = {
+//     refreshToken: string
+//     isValid : boolean
+// }

@@ -16,24 +16,20 @@ exports.jwtService = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongodb_1 = require("mongodb");
+const db_1 = require("../db/db");
 dotenv_1.default.config();
 exports.jwtService = {
-    generateAccessToken(user) {
+    generateAccessToken(userId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const accessToken = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '12h' });
+            const accessToken = jsonwebtoken_1.default.sign({ userId: userId }, process.env.JWT_SECRET, { expiresIn: '10s' });
             return accessToken;
         });
     },
-    generateRefreshToken(user) {
+    generateRefreshToken(userId) {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const refreshToken = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '30d' });
-                return refreshToken;
-            }
-            catch (error) {
-                console.error('Error generating refresh token:', error);
-                throw error;
-            }
+            const refreshToken = jsonwebtoken_1.default.sign({ userId: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '20s' });
+            let result = yield db_1.tokensCollection.insertOne({ refreshToken: refreshToken, isValid: true });
+            return refreshToken;
         });
     },
     getUserIdByToken(token) {
@@ -43,25 +39,59 @@ exports.jwtService = {
                 return new mongodb_1.ObjectId(result.userId);
             }
             catch (error) {
+                console.log(error);
                 return null;
             }
+        });
+    },
+    InvalidRefreshToken(refreshToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield db_1.tokensCollection.updateOne({ 'refreshToken': refreshToken }, { $set: { isValid: false } });
+                return result.modifiedCount === 1;
+            }
+            catch (error) {
+                throw error;
+            }
+        });
+    },
+    checkValidityOfToken(refreshToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const check = yield db_1.tokensCollection.findOne({ 'refreshToken': refreshToken, 'isValid': true });
+            return !!check;
         });
     },
     verifyRefreshToken(refreshToken) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const tokenVerify = jsonwebtoken_1.default.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-                const tokenExpirationTime = tokenVerify.expiredIn * 1000;
-                const currentTime = Date.now();
-                if (tokenExpirationTime < currentTime) {
-                    return { isValid: false };
-                }
-                const userId = tokenVerify.user.id;
+                //const tokenExpirationTime = new Date(tokenVerify.expiredIn * 1000)
+                const userId = tokenVerify.userId;
+                // const currentTime = new Date()
+                // if (tokenExpirationTime < currentTime) {
+                //     return { isValid: false, userId }
+                // }
                 return { isValid: true, userId };
             }
             catch (error) {
-                console.error('Error while verifying token:', error);
-                return { isValid: false };
+                return null;
+            }
+        });
+    },
+    verifyAccessToken(accessToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const tokenVerify = jsonwebtoken_1.default.verify(accessToken, process.env.JWT_SECRET);
+                //const tokenExpirationTime = new Date(tokenVerify.expiredIn * 1000)
+                const userId = tokenVerify.userId;
+                // const currentTime = new Date()
+                // if (tokenExpirationTime < currentTime) {
+                //     return { isValid: false, userId }
+                // }
+                return { isValid: true, userId };
+            }
+            catch (error) {
+                return null;
             }
         });
     },
