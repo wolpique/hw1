@@ -76,7 +76,7 @@ export const authService = {
                 console.error('User not found for email:', email)
                 return null
             }
-
+            console.log('process.env.TOKEN_SECRET!', process.env.TOKEN_SECRET!)
             const passwordCode = jwt.sign({ user: user.id }, process.env.TOKEN_SECRET!, { expiresIn: '30m' })
 
             await emailsManager.sendPasswordRecoveryMessage(email, passwordCode)
@@ -90,10 +90,14 @@ export const authService = {
     async confirmPassword(newPassword: string, recoveryCode: string): Promise<boolean> {
 
         try {
+            console.log('process.env.TOKEN_SECRET!', process.env.TOKEN_SECRET!)
+
             const payload: any = jwt.verify(recoveryCode, process.env.TOKEN_SECRET!)
+            console.log('payload', payload)
 
 
-            const userId = payload.userId
+            const userId = payload.user
+            console.log('userId', userId)
             const checkUser = await QueryUsersRepository.findUserById(userId)
             if (!checkUser) {
                 return false

@@ -44,7 +44,7 @@ export const emailAdapter = {
         <p>Код востановления для тестов</p>
         <p>${signature}</p>
     `;
-
+        console.log('SIGNATURE', signature)
         const info = await transporter.sendMail({
             from: 'Wolpik <sholpantlegenova99@gmail.com>', // sender address
             to: email, // list of receivers

@@ -90,6 +90,7 @@ exports.authService = {
                     console.error('User not found for email:', email);
                     return null;
                 }
+                console.log('process.env.TOKEN_SECRET!', process.env.TOKEN_SECRET);
                 const passwordCode = jsonwebtoken_1.default.sign({ user: user.id }, process.env.TOKEN_SECRET, { expiresIn: '30m' });
                 yield email_manager_1.emailsManager.sendPasswordRecoveryMessage(email, passwordCode);
                 return true;
@@ -103,8 +104,11 @@ exports.authService = {
     confirmPassword(newPassword, recoveryCode) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log('process.env.TOKEN_SECRET!', process.env.TOKEN_SECRET);
                 const payload = jsonwebtoken_1.default.verify(recoveryCode, process.env.TOKEN_SECRET);
-                const userId = payload.userId;
+                console.log('payload', payload);
+                const userId = payload.user;
+                console.log('userId', userId);
                 const checkUser = yield queryUsersRepository_1.QueryUsersRepository.findUserById(userId);
                 if (!checkUser) {
                     return false;

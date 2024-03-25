@@ -137,8 +137,10 @@ authRoute.post('/password-recovery', limitRequestMiddleware, emailPasswordValida
 authRoute.post('/new-password', limitRequestMiddleware, newPasswordValidationMiddleware(), async (req: RequestWithBody<{ newPassword: string, recoveryCode: string }>, res: Response) => {
     const newPassword = req.body.newPassword
     const recoveryCode = req.body.recoveryCode
-
+    console.log('recoveryCode', recoveryCode)
     const confirm = await authService.confirmPassword(newPassword, recoveryCode)
+    console.log('confirm', confirm)
+
     if (!confirm) {
         return res.status(400).send({ errorsMessages: [{ message: 'Incoect', field: "recoveryCode" }] })
     }

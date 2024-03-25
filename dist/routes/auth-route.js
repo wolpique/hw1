@@ -117,7 +117,9 @@ exports.authRoute.post('/password-recovery', limit_requests_1.limitRequestMiddle
 exports.authRoute.post('/new-password', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.newPasswordValidationMiddleware)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const newPassword = req.body.newPassword;
     const recoveryCode = req.body.recoveryCode;
+    console.log('recoveryCode', recoveryCode);
     const confirm = yield auth_service_1.authService.confirmPassword(newPassword, recoveryCode);
+    console.log('confirm', confirm);
     if (!confirm) {
         return res.status(400).send({ errorsMessages: [{ message: 'Incoect', field: "recoveryCode" }] });
     }
