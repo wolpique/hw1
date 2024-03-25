@@ -5,21 +5,22 @@ import { RequestWithBodyAndParams, RequestWithParams } from "../models/common/co
 import { CommentsBody, CommentsParams } from "../models/comments/input/comment.input.models";
 import { commentValidator } from "../middlewares/validators/comments-validator";
 import { ObjectId } from "mongodb";
+import { QueryCommentsRepository } from "../query-repositories/queryCommentsRepository";
 
 
 export const commentsRoute = Router({})
 
-commentsRoute.put('/:id', bearerAuth, commentValidator(), async (req:RequestWithBodyAndParams<CommentsParams, CommentsBody>, res: Response) => {
+commentsRoute.put('/:id', bearerAuth, commentValidator(), async (req: RequestWithBodyAndParams<CommentsParams, CommentsBody>, res: Response) => {
     const commentId = req.params.id
-    const {id} = req.user
+    const { id } = req.user
 
-    if (!ObjectId.isValid(commentId)){
+    if (!ObjectId.isValid(commentId)) {
         return res.sendStatus(404)
     }
 
-    let {content } = req.body
+    let { content } = req.body
 
-    const comment = await commentsRepository.getCommentById(commentId)
+    const comment = await QueryCommentsRepository.getCommentById(commentId)
 
     if (!comment) {
         return res.sendStatus(404)
@@ -37,7 +38,7 @@ commentsRoute.put('/:id', bearerAuth, commentValidator(), async (req:RequestWith
 
     const isUpdated = await commentsRepository.updateCommentById(commentId, updatedData)
 
-    if(!isUpdated){
+    if (!isUpdated) {
         res.sendStatus(404)
         return
     }
@@ -45,10 +46,10 @@ commentsRoute.put('/:id', bearerAuth, commentValidator(), async (req:RequestWith
     return res.sendStatus(204)
 })
 
-commentsRoute.get('/:id', async (req:RequestWithParams<CommentsParams>, res: Response) => {
+commentsRoute.get('/:id', async (req: RequestWithParams<CommentsParams>, res: Response) => {
     const commentId = req.params.id
 
-    const comment = await commentsRepository.getCommentById(commentId)
+    const comment = await QueryCommentsRepository.getCommentById(commentId)
 
     if (!comment) {
         return res.sendStatus(404)
@@ -60,15 +61,15 @@ commentsRoute.get('/:id', async (req:RequestWithParams<CommentsParams>, res: Res
 
 commentsRoute.delete('/:id', bearerAuth, async (req: RequestWithParams<CommentsParams>, res: Response) => {
     const commentId = req.params.id
-    const {id} = req.user
+    const { id } = req.user
 
-    const comment = await commentsRepository.getCommentById(commentId)
+    const comment = await QueryCommentsRepository.getCommentById(commentId)
 
-    if(!comment){
+    if (!comment) {
         return res.sendStatus(404)
     }
 
-    if(comment.commentatorInfo.userId !== id){
+    if (comment.commentatorInfo.userId !== id) {
         return res.sendStatus(403)
     }
 

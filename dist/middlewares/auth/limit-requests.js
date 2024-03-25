@@ -10,26 +10,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.limitRequestMiddleware = void 0;
-const db_1 = require("../../db/db");
+const rateLimit_schema_1 = require("../../domain/schemas/rateLimit.schema");
 const maxRequests = 5;
 const limitRequestMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const IP = (_a = req.ip) !== null && _a !== void 0 ? _a : 'default';
-    console.log('ip', IP);
     const URL = req.url;
-    console.log('URL', URL);
     const date = new Date();
     try {
-        const count = yield db_1.rateLimitColection.countDocuments({
+        const count = yield rateLimit_schema_1.RateLimitModelClass.countDocuments({
             IP: IP,
             URL: URL,
             date: { $gte: new Date(Date.now() - 10000) }
         });
-        console.log('count', count);
         if (count + 1 > maxRequests) {
             return res.status(429).send('Too many requests!');
         }
-        yield db_1.rateLimitColection.insertOne({ IP: IP, URL: URL, date: date });
+        yield rateLimit_schema_1.RateLimitModelClass.create({ IP: IP, URL: URL, date: date });
     }
     catch (error) {
         console.error('Error while checking rate limit:', error);

@@ -20,6 +20,8 @@ const add_1 = require("date-fns/add");
 const email_manager_1 = require("../managers/email-manager");
 const crypto_1 = require("crypto");
 const jwt_service_1 = require("./jwt-service");
+const queryUsersRepository_1 = require("../query-repositories/queryUsersRepository");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 exports.authService = {
     createUser(login, email, password) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28,12 +30,10 @@ exports.authService = {
                 const code = (0, crypto_1.randomUUID)();
                 const user = {
                     _id: new mongodb_1.ObjectId(),
-                    accountData: {
-                        login,
-                        email,
-                        password: passwordHash,
-                        createdAt: new Date().toISOString(),
-                    },
+                    login,
+                    email,
+                    password: passwordHash,
+                    createdAt: new Date().toISOString(),
                     emailConfirmation: {
                         code,
                         expirationDate: (0, add_1.add)(new Date(), {
@@ -44,7 +44,7 @@ exports.authService = {
                     },
                 };
                 const createResult = users_repository_1.UsersRepository.createUser(user);
-                yield email_manager_1.emailsManager.sendPasswordRecoveryMessage(email, code);
+                yield email_manager_1.emailsManager.sendRegistrationRecoveryMessage(email, code);
                 return createResult;
             }
             catch (error) {
@@ -73,12 +73,49 @@ exports.authService = {
                         })
                     } });
                 yield users_repository_1.UsersRepository.updateEmailConfirmation(email, newConfirmationData);
-                yield email_manager_1.emailsManager.sendPasswordRecoveryMessage(email, code); //null
+                yield email_manager_1.emailsManager.sendRegistrationRecoveryMessage(email, code);
                 return true;
             }
             catch (error) {
                 console.error('Error resending email:', error);
-                return null; // Return null in case of error
+                return null;
+            }
+        });
+    },
+    emailResendingPassword(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const user = yield users_repository_1.UsersRepository.findByLoginOrEmail(email);
+                if (!user) {
+                    console.error('User not found for email:', email);
+                    return null;
+                }
+                const passwordCode = jsonwebtoken_1.default.sign({ user: user.id }, process.env.TOKEN_SECRET, { expiresIn: '30m' });
+                yield email_manager_1.emailsManager.sendPasswordRecoveryMessage(email, passwordCode);
+                return true;
+            }
+            catch (error) {
+                console.error('Error while resending password:', error);
+                return true;
+            }
+        });
+    },
+    confirmPassword(newPassword, recoveryCode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const payload = jsonwebtoken_1.default.verify(recoveryCode, process.env.TOKEN_SECRET);
+                const userId = payload.userId;
+                const checkUser = yield queryUsersRepository_1.QueryUsersRepository.findUserById(userId);
+                if (!checkUser) {
+                    return false;
+                }
+                const passwordHash = yield bcrypt_1.default.hash(newPassword, 10);
+                yield users_repository_1.UsersRepository.updatePassword(userId, passwordHash);
+                return true;
+            }
+            catch (error) {
+                console.error('Error confirming password:', error);
+                return false;
             }
         });
     },
@@ -104,9 +141,20 @@ exports.authService = {
             const newdeviceId = new mongodb_1.ObjectId().toString(); //30-41 auth service method login? return AT RT
             const accessToken = yield jwt_service_1.jwtService.generateAccessToken(user_id);
             const refreshToken = yield jwt_service_1.jwtService.generateAndStoreRefreshToken(user_id, newdeviceId);
-            const decoded = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
-            //console.log('accessToken', accessToken, 'refreshToken', refreshToken, 'newdeviceId', newdeviceId, 'decoded', decoded, 'user_id', user_id)
+            const decoded = yield jwt_service_1.jwtService.decodeRefreshToken(refreshToken);
             return { accessToken, refreshToken, newdeviceId, decoded, user_id };
         });
-    }
+    },
+    meInfo(userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield queryUsersRepository_1.QueryUsersRepository.findUserById(userId);
+            console.log('user', user);
+            const { email, login, id } = user;
+            return {
+                email: email,
+                login: login,
+                userId: id
+            };
+        });
+    },
 };

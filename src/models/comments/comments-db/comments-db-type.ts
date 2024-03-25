@@ -1,5 +1,3 @@
-import { ObjectId } from "mongodb"
-
 export type CommentsDBType = {
     content: string,
     commentatorInfo: {
@@ -8,5 +6,5 @@ export type CommentsDBType = {
     },
     postId: string
     createdAt: string
-    
+
 }

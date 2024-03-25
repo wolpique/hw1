@@ -13,20 +13,19 @@ exports.authRoute = void 0;
 const express_1 = require("express");
 const auth_validator_1 = require("../middlewares/validators/auth-validator");
 const users_service_1 = require("../services/users.service");
-const users_repository_1 = require("../repositories/users-repository");
 const jwt_service_1 = require("../services/jwt-service");
 const auth_middleware_1 = require("../middlewares/auth/auth-middleware");
 const auth_service_1 = require("../services/auth.service");
 const cookies_1 = require("../application/cookies");
 const limit_requests_1 = require("../middlewares/auth/limit-requests");
 const device_repository_1 = require("../repositories/device-repository");
+const refreshToken_validator_1 = require("../middlewares/validators/refreshToken-validator");
+const users_repository_1 = require("../repositories/users-repository");
 exports.authRoute = (0, express_1.Router)({});
 exports.authRoute.post('/login', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.authLoginValidation)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const user = yield users_service_1.usersService.checkCredentials(req.body.loginOrEmail, req.body.password);
-    if (!user) {
-        return res.sendStatus(401);
-    }
+    console.log('useruseruser', user);
     if (user) {
         let { accessToken, refreshToken, newdeviceId, decoded, user_id } = yield auth_service_1.authService.loginUser(user);
         yield cookies_1.cookieService.setRefreshTokenCookie(res, refreshToken);
@@ -38,54 +37,10 @@ exports.authRoute.post('/login', limit_requests_1.limitRequestMiddleware, (0, au
         return res.sendStatus(401);
     }
 }));
-exports.authRoute.post('/refresh-token', auth_middleware_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.authRoute.post('/logout', refreshToken_validator_1.authRefreshTokenBearerValidator, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-        return res.status(401).send('Access Denied. No refresh token provided.');
-    }
     try {
-        const decoded = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
-        if (!decoded) {
-            return res.status(401).send('Refresh token has expired');
-        }
-        const check = yield jwt_service_1.jwtService.checkValidityOfToken(decoded.userId, decoded.deviceId, refreshToken);
-        if (check == false) {
-            return res.status(401).send('Access Denied. Invalid refresh token provided.');
-        }
-        const user = yield users_service_1.usersService.findUserById(decoded.userId);
-        if (!user) {
-            return res.sendStatus(401);
-        }
-        //const newdeviceId = new ObjectId().toString()
-        const update = yield device_repository_1.DevicesRepository.updateLastActiveDate(user.id);
-        if (update == false) {
-            return res.status(401).send('LastActiveDate is invalid.');
-        }
-        const newAccessToken = yield jwt_service_1.jwtService.generateAccessToken(user.id);
-        const newRefreshToken = yield jwt_service_1.jwtService.generateAndStoreRefreshToken(user.id, decoded.deviceId); //в ауз сервис
-        //const updateDate = await DevicesRepository.updateLastActiveDate(user.id, newdeviceId);
-        yield cookies_1.cookieService.setRefreshTokenCookie(res, newRefreshToken);
-        return res.send({ accessToken: newAccessToken });
-    }
-    catch (error) {
-        return res.sendStatus(401);
-    }
-}));
-exports.authRoute.post('/logout', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-        return res.status(401).send('Access Denied. No refresh token provided.');
-    }
-    try {
-        const decoded = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
-        if (!decoded) {
-            return res.status(401).send('Refresh token has expired');
-        }
-        const check = yield jwt_service_1.jwtService.checkValidityOfToken(decoded.userId, decoded.deviceId, refreshToken);
-        if (check == false) {
-            return res.status(401).send('Access Denied. Invalid refresh token provided.');
-        }
-        //await jwtService.InvalidRefreshToken(refreshToken)
+        const decoded = yield jwt_service_1.jwtService.decodeRefreshToken(refreshToken);
         const { userId, deviceId } = decoded;
         const deleted = yield device_repository_1.DevicesRepository.deleteDeviceById(userId, deviceId);
         if (deleted == false) {
@@ -96,6 +51,28 @@ exports.authRoute.post('/logout', (req, res) => __awaiter(void 0, void 0, void 0
     catch (error) {
         console.error('Error logging out:', error);
         return null;
+    }
+}));
+exports.authRoute.post('/refresh-token', refreshToken_validator_1.authRefreshTokenBearerValidator, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.user.id;
+        const user = yield users_service_1.usersService.findUserById(userId);
+        console.log('userId', userId);
+        const update = yield device_repository_1.DevicesRepository.updateLastActiveDate(userId);
+        console.log('update', update);
+        if (update == false) {
+            return res.status(401).send('LastActiveDate is invalid.');
+        }
+        const newAccessToken = yield jwt_service_1.jwtService.generateAccessToken(userId);
+        console.log('newAccessToken', newAccessToken);
+        const newRefreshToken = yield jwt_service_1.jwtService.generateAndStoreRefreshToken(userId, userId.deviceId); //в ауз сервис
+        console.log('newRefreshToken', newRefreshToken);
+        yield cookies_1.cookieService.setRefreshTokenCookie(res, newRefreshToken);
+        return res.send({ accessToken: newAccessToken });
+    }
+    catch (error) {
+        console.log("error", error);
+        return res.sendStatus(401);
     }
 }));
 exports.authRoute.post('/registration', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.authRegistrationValidation)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -110,6 +87,7 @@ exports.authRoute.post('/registration', limit_requests_1.limitRequestMiddleware,
 }));
 exports.authRoute.post('/registration-email-resending', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.emailValidationMiddleware)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const resend = yield auth_service_1.authService.emailResending(req.body.email);
+    console.log('THIS IS RESEND', resend);
     if (!resend) {
         return res.status(400).send({ errorsMessages: [{ message: "Slomalsya", field: "email" }] });
     }
@@ -126,19 +104,29 @@ exports.authRoute.post('/registration-confirmation', limit_requests_1.limitReque
         return res.status(400).send({ errorsMessages: [{ message: "Slomalsya", field: "code" }] });
     }
 }));
+exports.authRoute.post('/password-recovery', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.emailPasswordValidationMiddleware)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const email = req.body.email;
+    console.log('EMAIL HERE', email);
+    const registered = yield users_repository_1.UsersRepository.findByEmail(email);
+    if (!registered) {
+        return res.sendStatus(204);
+    }
+    const resend = yield auth_service_1.authService.emailResendingPassword(email);
+    return res.sendStatus(204);
+}));
+exports.authRoute.post('/new-password', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.newPasswordValidationMiddleware)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const newPassword = req.body.newPassword;
+    const recoveryCode = req.body.recoveryCode;
+    const confirm = yield auth_service_1.authService.confirmPassword(newPassword, recoveryCode);
+    if (!confirm) {
+        return res.status(400).send({ errorsMessages: [{ message: 'Incoect', field: "recoveryCode" }] });
+    }
+    return res.status(204).send();
+}));
 exports.authRoute.get('/me', auth_middleware_1.bearerAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const auth = req.headers['authorization'];
-    if (!auth) {
-        return res.sendStatus(401);
-    }
-    const accessToken = auth.split(' ')[1];
-    const verifyToken = yield jwt_service_1.jwtService.verifyAndDecodeAccessToken(accessToken);
-    if (!verifyToken) {
-        return res.sendStatus(401);
-    }
-    const userData = yield users_repository_1.UsersRepository.findUserById(verifyToken.userId);
-    if (!userData) {
-        return res.sendStatus(401);
-    }
-    return res.status(200).send({ userId: userData.id, login: userData.login, email: userData.email });
+    const userId = req.user.id;
+    console.log("userId", userId);
+    const result = yield auth_service_1.authService.meInfo(userId);
+    console.log("result", result);
+    return res.status(200).send(result);
 }));

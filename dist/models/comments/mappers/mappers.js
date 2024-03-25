@@ -7,7 +7,7 @@ const commentmapper = (commentDb) => {
         content: commentDb.content,
         commentatorInfo: {
             userId: commentDb.commentatorInfo.userId,
-            userLogin: commentDb.commentatorInfo.userLogin
+            userLogin: commentDb.commentatorInfo.userLogin,
         },
         createdAt: commentDb.createdAt
     };

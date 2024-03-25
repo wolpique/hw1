@@ -8,28 +8,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.runDb = exports.emailsModel = exports.devicesCollection = exports.rateLimitColection = exports.commentCollection = exports.usersCollection = exports.postCollection = exports.blogCollection = void 0;
-const mongodb_1 = require("mongodb");
-const uri = process.env.MONGO_URL; //|| 'mongodb://localhost:27017'
-//const client = new MongoClient("mongodb+srv://pomidorkartoshka:Googledoodle123@cluster0.q2mmgvv.mongodb.net/?retryWrites=true&w=majority")
-const client = new mongodb_1.MongoClient('mongodb://localhost:27017');
-const database = client.db('blogs-hws');
-exports.blogCollection = database.collection('blogs');
-exports.postCollection = database.collection('posts');
-exports.usersCollection = database.collection('users');
-exports.commentCollection = database.collection('comments');
-exports.rateLimitColection = database.collection('limit');
-exports.devicesCollection = database.collection('devices');
-exports.emailsModel = database.collection('emails');
+exports.runDb = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const uri = process.env.MONGO_URL || 'mongodb://localhost:27017';
+const databaseName = process.env.MONGO_DB_NAME || 'home_works';
 const runDb = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield client.connect();
+        yield mongoose_1.default.connect(uri + '/' + databaseName);
         console.log('Client connected to Db');
     }
     catch (err) {
         console.log(err);
-        yield client.close();
+        yield mongoose_1.default.disconnect();
     }
 });
 exports.runDb = runDb;

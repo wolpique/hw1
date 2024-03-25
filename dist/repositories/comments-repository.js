@@ -10,44 +10,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commentsRepository = void 0;
-const mongodb_1 = require("mongodb");
-const db_1 = require("../db/db");
-const mappers_1 = require("../models/comments/mappers/mappers");
+const comments_schema_1 = require("../domain/schemas/comments.schema");
 class commentsRepository {
-    static getCommentById(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const comment = yield db_1.commentCollection.findOne({ _id: new mongodb_1.ObjectId(id) });
-            if (!comment) {
-                return null;
-            }
-            return (0, mappers_1.commentmapper)(comment);
-        });
-    }
     static createComment(createdComment) {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const comment = yield db_1.commentCollection.insertOne(Object.assign({}, createdComment));
-                return comment.insertedId.toString();
-            }
-            catch (_a) {
-                return null;
-            }
+            const newComment = new comments_schema_1.CommentsModelClass(Object.assign({}, createdComment));
+            yield newComment.save();
+            return newComment.toObject();
         });
     }
     static updateCommentById(id, updateData) {
         return __awaiter(this, void 0, void 0, function* () {
-            const comment = yield db_1.commentCollection.updateOne({ _id: new mongodb_1.ObjectId(id) }, {
-                $set: {
-                    content: updateData.content
-                }
-            });
-            return !!comment.matchedCount;
+            const commentToUpdate = yield comments_schema_1.CommentsModelClass.findOneAndUpdate({ _id: id }, { $set: updateData });
+            if (!commentToUpdate) {
+                return false;
+            }
+            return true;
         });
     }
     static deleteCommentById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const comment = yield db_1.commentCollection.deleteOne({ _id: new mongodb_1.ObjectId(id) });
-            return !!comment.deletedCount;
+            const result = yield comments_schema_1.CommentsModelClass.findOneAndDelete({ _id: id });
+            return !!result;
         });
     }
 }

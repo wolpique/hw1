@@ -15,6 +15,7 @@ const auth_middleware_1 = require("../middlewares/auth/auth-middleware");
 const comments_repository_1 = require("../repositories/comments-repository");
 const comments_validator_1 = require("../middlewares/validators/comments-validator");
 const mongodb_1 = require("mongodb");
+const queryCommentsRepository_1 = require("../query-repositories/queryCommentsRepository");
 exports.commentsRoute = (0, express_1.Router)({});
 exports.commentsRoute.put('/:id', auth_middleware_1.bearerAuth, (0, comments_validator_1.commentValidator)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const commentId = req.params.id;
@@ -23,7 +24,7 @@ exports.commentsRoute.put('/:id', auth_middleware_1.bearerAuth, (0, comments_val
         return res.sendStatus(404);
     }
     let { content } = req.body;
-    const comment = yield comments_repository_1.commentsRepository.getCommentById(commentId);
+    const comment = yield queryCommentsRepository_1.QueryCommentsRepository.getCommentById(commentId);
     if (!comment) {
         return res.sendStatus(404);
     }
@@ -41,7 +42,7 @@ exports.commentsRoute.put('/:id', auth_middleware_1.bearerAuth, (0, comments_val
 }));
 exports.commentsRoute.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const commentId = req.params.id;
-    const comment = yield comments_repository_1.commentsRepository.getCommentById(commentId);
+    const comment = yield queryCommentsRepository_1.QueryCommentsRepository.getCommentById(commentId);
     if (!comment) {
         return res.sendStatus(404);
     }
@@ -50,7 +51,7 @@ exports.commentsRoute.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0
 exports.commentsRoute.delete('/:id', auth_middleware_1.bearerAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const commentId = req.params.id;
     const { id } = req.user;
-    const comment = yield comments_repository_1.commentsRepository.getCommentById(commentId);
+    const comment = yield queryCommentsRepository_1.QueryCommentsRepository.getCommentById(commentId);
     if (!comment) {
         return res.sendStatus(404);
     }

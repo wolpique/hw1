@@ -6,5 +6,5 @@ export type OutputCommentType = {
         userLogin: string
     },
     createdAt: string
-    
+
 }

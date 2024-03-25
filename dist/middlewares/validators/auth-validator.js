@@ -9,10 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authRegistrationValidation = exports.authLoginValidation = exports.codeValidationMiddleware = exports.emailValidationMiddleware = void 0;
+exports.authRegistrationValidation = exports.newPasswordValidationMiddleware = exports.passwordValidationMiddleware = exports.authLoginValidation = exports.codeValidationMiddleware = exports.emailPasswordValidationMiddleware = exports.emailValidationMiddleware = void 0;
 const express_validator_1 = require("express-validator");
 const input_model_validation_1 = require("../inputModel/input-model-validation");
-const db_1 = require("../../db/db");
+const users_schema_1 = require("../../domain/schemas/users.schema");
 const loginOrEmailValidation = (0, express_validator_1.body)('loginOrEmail')
     .isString()
     .trim()
@@ -33,6 +33,12 @@ const passwordValidation = (0, express_validator_1.body)('password')
     .notEmpty()
     .isLength({ min: 6, max: 20 })
     .withMessage('Invalid password');
+const newPasswordValidation = (0, express_validator_1.body)('newPassword')
+    .isString()
+    .trim()
+    .notEmpty()
+    .isLength({ min: 6, max: 20 })
+    .withMessage('Invalid password');
 const registrationUserEmailValidation = (0, express_validator_1.body)('email')
     .isString()
     .trim()
@@ -40,7 +46,7 @@ const registrationUserEmailValidation = (0, express_validator_1.body)('email')
     .isLength({ min: 6, max: 30 })
     .isEmail()
     .custom((email) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield db_1.usersCollection.findOne({ 'accountData.email': email });
+    const user = yield users_schema_1.UsersModelClass.findOne({ 'email': email });
     if (user) {
         throw new Error('Email already exists');
     }
@@ -53,7 +59,7 @@ const registrationUserLoginValidation = (0, express_validator_1.body)('login')
     .isLength({ min: 3, max: 10 })
     .matches('^[a-zA-Z0-9_-]*$')
     .custom((login) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield db_1.usersCollection.findOne({ 'accountData.login': login });
+    const user = yield users_schema_1.UsersModelClass.findOne({ 'login': login });
     if (user) {
         throw new Error('Login already exists');
     }
@@ -68,9 +74,12 @@ const emailValidation = (0, express_validator_1.body)('email')
     .notEmpty()
     .isLength({ min: 6, max: 30 })
     .isEmail()
-    .custom((isConfirmed) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield db_1.usersCollection.findOne({ 'emailConfirmation.isConfirmed': isConfirmed });
-    if (isConfirmed === true) {
+    .matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
+    .custom((email) => __awaiter(void 0, void 0, void 0, function* () {
+    // const user = await UsersModelClass.findOne({ 'emailConfirmation.isConfirmed': isConfirmed })
+    // if (isConfirmed === true) {
+    const user = yield users_schema_1.UsersModelClass.findOne({ 'email': email });
+    if (user && user.emailConfirmation.isConfirmed === true) {
         throw new Error('Email is already confirmed');
     }
     else {
@@ -78,22 +87,28 @@ const emailValidation = (0, express_validator_1.body)('email')
     }
 }))
     .withMessage('Invalid emailValidation!');
+const emailPasswordRecovery = (0, express_validator_1.body)('email')
+    .isString()
+    .trim()
+    .matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
+    .isEmail()
+    .withMessage('Invalid emailValidation!');
 const codeValidation = (0, express_validator_1.body)('code')
     .isString()
     .trim()
     .notEmpty()
-    // .custom(async (isConfirmed) => {
-    //     const user = await usersCollection.findOne({ 'emailConfirmation.isConfirmed': isConfirmed })
-    //     if (isConfirmed === true) {
-    //         throw new Error('Code is already confirmed');
-    //     }
-    // })
     .withMessage('Invalid codeValidation!');
 const emailValidationMiddleware = () => [emailValidation, input_model_validation_1.inputModelValidation];
 exports.emailValidationMiddleware = emailValidationMiddleware;
+const emailPasswordValidationMiddleware = () => [emailPasswordRecovery, input_model_validation_1.inputModelValidation];
+exports.emailPasswordValidationMiddleware = emailPasswordValidationMiddleware;
 const codeValidationMiddleware = () => [codeValidation, input_model_validation_1.inputModelValidation];
 exports.codeValidationMiddleware = codeValidationMiddleware;
 const authLoginValidation = () => [loginOrEmailValidation, passwordValidation, input_model_validation_1.inputModelValidation];
 exports.authLoginValidation = authLoginValidation;
+const passwordValidationMiddleware = () => [passwordValidation, input_model_validation_1.inputModelValidation];
+exports.passwordValidationMiddleware = passwordValidationMiddleware;
+const newPasswordValidationMiddleware = () => [newPasswordValidation, input_model_validation_1.inputModelValidation];
+exports.newPasswordValidationMiddleware = newPasswordValidationMiddleware;
 const authRegistrationValidation = () => [passwordValidation, registrationUserEmailValidation, registrationUserLoginValidation, input_model_validation_1.inputModelValidation];
 exports.authRegistrationValidation = authRegistrationValidation;

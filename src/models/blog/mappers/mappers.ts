@@ -1,11 +1,11 @@
 import { WithId } from "mongodb";
-import {BlogDBType} from "../blog_db/blog-db-type"
+import { BlogDBType } from "../blog_db/blog-db-type"
 import { OutputBlogType } from "../output/blog.output.models";
 
 
 export const blogMapper = (blogDb: WithId<BlogDBType>): OutputBlogType => {
     return {
-        id: blogDb._id.toString(),
+        _id: blogDb._id,
         name: blogDb.name,
         description: blogDb.description,
         websiteUrl: blogDb.websiteUrl,
@@ -13,3 +13,4 @@ export const blogMapper = (blogDb: WithId<BlogDBType>): OutputBlogType => {
         createdAt: blogDb.createdAt
     }
 }
+

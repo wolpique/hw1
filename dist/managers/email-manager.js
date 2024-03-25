@@ -12,9 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.emailsManager = void 0;
 const email_adapter_1 = require("../adapters/email.adapter");
 exports.emailsManager = {
-    sendPasswordRecoveryMessage(email, code) {
+    sendRegistrationRecoveryMessage(email, code) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield email_adapter_1.emailAdapter.sendEmail(email, "Password Recovery", "Your recovery password is:" + code, code);
+            yield email_adapter_1.emailAdapter.sendEmail(email, "Confirm Account", "Your confirm code is:" + code, code);
+        });
+    },
+    sendPasswordRecoveryMessage(email, signature) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield email_adapter_1.emailAdapter.sendEmailPassword(email, "Password Recovery Code", "Your recovery password is:" + signature, signature);
         });
     }
 };

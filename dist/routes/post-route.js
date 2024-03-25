@@ -18,6 +18,8 @@ const blog_repository_1 = require("../repositories/blog-repository");
 const mongodb_1 = require("mongodb");
 const comments_repository_1 = require("../repositories/comments-repository");
 const comments_validator_1 = require("../middlewares/validators/comments-validator");
+const queryPostsRepository_1 = require("../query-repositories/queryPostsRepository");
+const queryCommentsRepository_1 = require("../query-repositories/queryCommentsRepository");
 exports.postRoutes = (0, express_1.Router)({});
 exports.postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const sortData = {
@@ -26,12 +28,12 @@ exports.postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         sortBy: req.query.sortBy,
         sortDirection: req.query.sortDirection,
     };
-    const posts = yield post_repository_1.PostRepository.getAllPosts(sortData);
+    const posts = yield queryPostsRepository_1.QueryPostRepository.getAllPosts(sortData);
     return res.send(posts);
 }));
 exports.postRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
-    const post = yield post_repository_1.PostRepository.getPostById(id);
+    const post = yield queryPostsRepository_1.QueryPostRepository.getPostById(id);
     if (!post) {
         return res.sendStatus(404);
     }
@@ -42,7 +44,7 @@ exports.postRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
 }));
 exports.postRoutes.get('/:id/comments', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
-    const post = yield post_repository_1.PostRepository.getPostById(id);
+    const post = yield queryPostsRepository_1.QueryPostRepository.getPostById(id);
     if (!post) {
         res.sendStatus(404);
         return;
@@ -53,14 +55,14 @@ exports.postRoutes.get('/:id/comments', (req, res) => __awaiter(void 0, void 0, 
         pageNumber: req.query.pageNumber,
         pageSize: req.query.pageSize
     };
-    const comment = yield post_repository_1.PostRepository.getCommentById(id, sortData);
+    const comment = yield queryPostsRepository_1.QueryPostRepository.getCommentById(id, sortData);
     return res.send(comment);
 }));
 exports.postRoutes.post('/:id/comments', auth_middleware_1.bearerAuth, (0, comments_validator_1.commentValidator)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const postId = req.params.id;
     const content = req.body.content;
     const { id, login } = req.user;
-    const post = yield post_repository_1.PostRepository.getPostById(postId);
+    const post = yield queryPostsRepository_1.QueryPostRepository.getPostById(postId);
     if (!post) {
         return res.sendStatus(404);
     }
@@ -68,7 +70,7 @@ exports.postRoutes.post('/:id/comments', auth_middleware_1.bearerAuth, (0, comme
         content,
         commentatorInfo: {
             userId: id,
-            userLogin: login
+            userLogin: login,
         },
         postId: post.id,
         createdAt: new Date().toISOString()
@@ -77,7 +79,7 @@ exports.postRoutes.post('/:id/comments', auth_middleware_1.bearerAuth, (0, comme
     if (!createdCommentId) {
         return res.sendStatus(404);
     }
-    const comment = yield comments_repository_1.commentsRepository.getCommentById(createdCommentId);
+    const comment = yield queryCommentsRepository_1.QueryCommentsRepository.getCommentById(createdCommentId);
     if (!comment) {
         return res.sendStatus(404);
     }
@@ -107,7 +109,7 @@ exports.postRoutes.put('/:id', auth_middleware_1.authMiddleware, (0, post_valida
     if (!blog) {
         return res.sendStatus(404);
     }
-    const post = yield post_repository_1.PostRepository.getPostById(id);
+    const post = yield queryPostsRepository_1.QueryPostRepository.getPostById(id);
     if (!post) {
         return res.sendStatus(404);
     }
@@ -122,7 +124,7 @@ exports.postRoutes.put('/:id', auth_middleware_1.authMiddleware, (0, post_valida
 }));
 exports.postRoutes.delete('/:id', auth_middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
-    const post = post_repository_1.PostRepository.getPostById(id);
+    const post = queryPostsRepository_1.QueryPostRepository.getPostById(id);
     if (!post) {
         return res.sendStatus(404);
     }

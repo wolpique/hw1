@@ -15,8 +15,9 @@ const blog_repository_1 = require("../repositories/blog-repository");
 const auth_middleware_1 = require("../middlewares/auth/auth-middleware");
 const blogs_validator_1 = require("../middlewares/validators/blogs-validator");
 const mongodb_1 = require("mongodb");
-const post_repository_1 = require("../repositories/post-repository");
 const post_validator_1 = require("../middlewares/validators/post-validator");
+const queryBlogsRepository_1 = require("../query-repositories/queryBlogsRepository");
+const queryPostsRepository_1 = require("../query-repositories/queryPostsRepository");
 exports.blogRoutes = (0, express_1.Router)({});
 exports.blogRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const sortData = {
@@ -26,7 +27,7 @@ exports.blogRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         pageNumber: req.query.pageNumber,
         pageSize: req.query.pageSize
     };
-    const blogs = yield blog_repository_1.BlogRepository.getAllBlogs(sortData);
+    const blogs = yield queryBlogsRepository_1.QueryBlogRepository.getAllBlogs(sortData);
     return res.send(blogs);
 }));
 exports.blogRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -56,12 +57,13 @@ exports.blogRoutes.get('/:id/posts', (req, res) => __awaiter(void 0, void 0, voi
         pageNumber: req.query.pageNumber,
         pageSize: req.query.pageSize
     };
-    const posts = yield blog_repository_1.BlogRepository.getPostsByBlogId(id, sortData);
+    const posts = yield queryBlogsRepository_1.QueryBlogRepository.getPostsByBlogId(id, sortData);
     return res.send(posts);
 }));
 exports.blogRoutes.post('/', auth_middleware_1.authMiddleware, (0, blogs_validator_1.blogValidation)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { name, description, websiteUrl } = req.body;
     const newBlog = {
+        _id: new mongodb_1.ObjectId,
         name,
         description,
         websiteUrl,
@@ -81,8 +83,8 @@ exports.blogRoutes.post('/:id/posts', auth_middleware_1.authMiddleware, (0, post
         res.sendStatus(404);
         return;
     }
-    const createdPostId = yield blog_repository_1.BlogRepository.createPostToBlog(blogId, { title, shortDescription, content });
-    const post = yield post_repository_1.PostRepository.getPostById(createdPostId.toString());
+    const createdPostId = yield queryBlogsRepository_1.QueryBlogRepository.createPostToBlog(blogId, { title, shortDescription, content });
+    const post = yield queryPostsRepository_1.QueryPostRepository.getPostById(createdPostId.toString());
     if (!post) {
         return res.sendStatus(404);
     }

@@ -1,8 +1,12 @@
-import { emailAdapter, emailNewAdapter } from "../adapters/email.adapter"
+import { emailAdapter } from "../adapters/email.adapter"
 
 export const emailsManager = {
-    async sendPasswordRecoveryMessage(email: string, code: string) {
-        await emailAdapter.sendEmail(email, "Password Recovery", "Your recovery password is:" + code, code)
+    async sendRegistrationRecoveryMessage(email: string, code: string) {
+        await emailAdapter.sendEmail(email, "Confirm Account", "Your confirm code is:" + code, code)
+    },
+
+    async sendPasswordRecoveryMessage(email: string, signature: string) {
+        await emailAdapter.sendEmailPassword(email, "Password Recovery Code", "Your recovery password is:" + signature, signature)
     }
 
 }

@@ -10,6 +10,7 @@ import { usersValidator } from "../middlewares/validators/users-validator";
 import { authMiddleware } from "../middlewares/auth/auth-middleware";
 import bcrypt from 'bcrypt'
 import { randomUUID } from "crypto";
+import { QueryUsersRepository } from "../query-repositories/queryUsersRepository";
 
 
 export const usersRoute = Router({})
@@ -24,7 +25,7 @@ usersRoute.get('/', authMiddleware, async (req: RequestWithQuery<QueryPageUsersI
         searchEmailTerm: req.query.searchEmailTerm
     }
 
-    const users = await UsersRepository.getAllUsers(sortData)
+    const users = await QueryUsersRepository.getAllUsers(sortData)
 
     return res.send(users)
 })
@@ -37,12 +38,10 @@ usersRoute.post('/', authMiddleware, usersValidator(), async (req: RequestWithBo
 
     const newUser = {
         _id: new ObjectId(),
-        accountData: {
-            login,
-            password: passwordHash,
-            email,
-            createdAt: new Date().toISOString()
-        },
+        login,
+        password: passwordHash,
+        email,
+        createdAt: new Date().toISOString(),
         emailConfirmation: {
             isConfirmed: true,
             code: randomUUID(),

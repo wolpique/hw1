@@ -11,30 +11,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.securityDeviceRoute = void 0;
 const express_1 = require("express");
-const users_repository_1 = require("../repositories/users-repository");
 const jwt_service_1 = require("../services/jwt-service");
 const device_repository_1 = require("../repositories/device-repository");
+const queryDevicesRepository_1 = require("../query-repositories/queryDevicesRepository");
+const refreshToken_validator_1 = require("../middlewares/validators/refreshToken-validator");
 exports.securityDeviceRoute = (0, express_1.Router)({});
-exports.securityDeviceRoute.get('/devices', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.securityDeviceRoute.get('/devices', refreshToken_validator_1.authRefreshTokenBearerValidator, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-        return res
-            .status(401)
-            .send('Refresh token is not found');
-    }
-    const decodedToken = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
+    const decodedToken = yield jwt_service_1.jwtService.decodeRefreshToken(refreshToken);
     if (!decodedToken) {
         return res
             .status(401)
             .send('Invalid token!');
     }
-    const user = yield users_repository_1.UsersRepository.findUserById(decodedToken.userId);
-    if (!user) {
-        return res
-            .status(401)
-            .send('User is not found');
-    }
-    const devices = yield device_repository_1.DevicesRepository.getAllDevicesByUser(decodedToken.userId);
+    const devices = yield queryDevicesRepository_1.QueryDevicesRepository.getAllDevicesByUser(decodedToken.userId);
     if (!devices) {
         return res.sendStatus(401);
     }
@@ -49,7 +39,7 @@ exports.securityDeviceRoute.delete('/devices', (req, res) => __awaiter(void 0, v
             .status(401)
             .send('Refresh token is not found');
     }
-    const decodedToken = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
+    const decodedToken = yield jwt_service_1.jwtService.decodeRefreshToken(refreshToken);
     if (!decodedToken) {
         return res
             .status(401)
@@ -63,7 +53,7 @@ exports.securityDeviceRoute.delete('/devices', (req, res) => __awaiter(void 0, v
         return res.status(500).send('Error');
     }
 }));
-exports.securityDeviceRoute.delete('/devices/:deviceId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.securityDeviceRoute.delete('/devices/:deviceId', refreshToken_validator_1.authRefreshTokenBearerValidator, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const refreshToken = req.cookies.refreshToken;
     const deviceId = req.params.deviceId;
     if (!refreshToken) {
@@ -76,18 +66,13 @@ exports.securityDeviceRoute.delete('/devices/:deviceId', (req, res) => __awaiter
             .status(401)
             .send('DeviceID token is not found');
     }
-    const decodedToken = yield jwt_service_1.jwtService.verifyAndDecodeRefreshToken(refreshToken);
-    const check = yield jwt_service_1.jwtService.checkValidityOfToken(decodedToken.userId, decodedToken.deviceId, refreshToken);
-    if (check == false) {
-        return res.status(401).send('Access Denied. Invalid refresh token provided.');
-    }
+    const decodedToken = yield jwt_service_1.jwtService.decodeRefreshToken(refreshToken);
     if (!decodedToken) {
         return res
             .status(401)
             .send('Invalid token!');
     }
     const device = yield device_repository_1.DevicesRepository.findDeviceIdByUser(deviceId);
-    console.log('device', device);
     if (!device) {
         return res
             .status(404)

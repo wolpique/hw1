@@ -1,14 +1,13 @@
 import bcrypt from 'bcrypt'
-import { ObjectId, UUID } from 'mongodb'
+import { ObjectId } from 'mongodb'
 import { UsersRepository } from '../repositories/users-repository'
 import { add } from 'date-fns/add'
 import { emailsManager } from '../managers/email-manager'
 import { UsersDBType } from '../models/users/users_db/users-db-type'
 import { randomUUID } from 'crypto'
 import { jwtService } from './jwt-service'
-import { cookieService } from '../application/cookies'
-import { DevicesRepository } from '../repositories/device-repository'
-import { devicesCollection } from '../db/db'
+import { QueryUsersRepository } from '../query-repositories/queryUsersRepository'
+import jwt from 'jsonwebtoken'
 
 
 export const authService = {
@@ -18,12 +17,10 @@ export const authService = {
             const code = randomUUID()
             const user: UsersDBType = {
                 _id: new ObjectId(),
-                accountData: {
-                    login,
-                    email,
-                    password: passwordHash,
-                    createdAt: new Date().toISOString(),
-                },
+                login,
+                email,
+                password: passwordHash,
+                createdAt: new Date().toISOString(),
                 emailConfirmation: {
                     code,
                     expirationDate: add(new Date(), {
@@ -35,7 +32,7 @@ export const authService = {
             }
 
             const createResult = UsersRepository.createUser(user)
-            await emailsManager.sendPasswordRecoveryMessage(email, code)
+            await emailsManager.sendRegistrationRecoveryMessage(email, code)
             return createResult
         } catch (error) {
             console.error('Error creating user:', error);
@@ -65,12 +62,50 @@ export const authService = {
                 },
             }
             await UsersRepository.updateEmailConfirmation(email, newConfirmationData)
-            await emailsManager.sendPasswordRecoveryMessage(email, code) //null
+            await emailsManager.sendRegistrationRecoveryMessage(email, code)
             return true
         } catch (error) {
             console.error('Error resending email:', error);
-            return null; // Return null in case of error
+            return null;
         }
+    },
+    async emailResendingPassword(email: string): Promise<boolean | null> {
+        try {
+            const user = await UsersRepository.findByLoginOrEmail(email)
+            if (!user) {
+                console.error('User not found for email:', email)
+                return null
+            }
+
+            const passwordCode = jwt.sign({ user: user.id }, process.env.TOKEN_SECRET!, { expiresIn: '30m' })
+
+            await emailsManager.sendPasswordRecoveryMessage(email, passwordCode)
+            return true
+        } catch (error) {
+            console.error('Error while resending password:', error);
+            return true;
+        }
+    },
+
+    async confirmPassword(newPassword: string, recoveryCode: string): Promise<boolean> {
+
+        try {
+            const payload: any = jwt.verify(recoveryCode, process.env.TOKEN_SECRET!)
+
+
+            const userId = payload.userId
+            const checkUser = await QueryUsersRepository.findUserById(userId)
+            if (!checkUser) {
+                return false
+            }
+            const passwordHash = await bcrypt.hash(newPassword, 10)
+            await UsersRepository.updatePassword(userId, passwordHash)
+            return true
+        } catch (error) {
+            console.error('Error confirming password:', error);
+            return false;
+        }
+
     },
 
     async confirmEmail(code: string): Promise<boolean> {
@@ -91,7 +126,6 @@ export const authService = {
 
     async loginUser(user: UsersDBType) {
 
-
         const user_id = user!._id.toString()
 
         const newdeviceId = new ObjectId().toString() //30-41 auth service method login? return AT RT
@@ -100,11 +134,23 @@ export const authService = {
 
         const refreshToken = await jwtService.generateAndStoreRefreshToken(user_id, newdeviceId)
 
-        const decoded = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
+        const decoded = await jwtService.decodeRefreshToken(refreshToken)
 
-
-        //console.log('accessToken', accessToken, 'refreshToken', refreshToken, 'newdeviceId', newdeviceId, 'decoded', decoded, 'user_id', user_id)
         return { accessToken, refreshToken, newdeviceId, decoded, user_id }
 
-    }
+    },
+    async meInfo(userId: string) {
+
+        const user = await QueryUsersRepository.findUserById(userId)
+        console.log('user', user)
+        const { email, login, id } = user!
+        return {
+            email: email,
+            login: login,
+            userId: id
+        }
+
+
+    },
+
 }

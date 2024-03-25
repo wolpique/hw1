@@ -1,107 +1,34 @@
-import { ObjectId } from "mongodb";
-import { commentCollection, postCollection } from "../db/db";
 import { OutputPostType } from "../models/post/output/post.output.models";
-import { postMapper } from "../models/post/mappers/mappers";
 import { PostDBType } from "../models/post/post_db/post-db-type";
-import { OutputPagePostType } from "../models/post/output/pages.post.output.models";
-import { QueryPostInputModel } from "../models/post/input/post.input.query.models";
-import { postCommentMapper } from "../models/post/mappers/mappers.postcomment";
-import { QueryCommentByPostIdInputModel } from "../models/comments/comments-db/comment.query.models";
+import { PostsModelClass } from "../domain/schemas/posts.schema";
 
 export class PostRepository {
-    
-    static async getAllPosts(sortData: QueryPostInputModel): Promise<OutputPagePostType> {
 
-        const pageNumber = sortData.pageNumber ?? 1
-        const pageSize = sortData.pageSize ?? 10
-        const sortBy = sortData.sortBy ?? 'createdAt'
-        const sortDirection = sortData.sortDirection ?? 'desc'
-
-        const posts = await postCollection
-            .find({})
-            .sort(sortBy, sortDirection)
-            .skip((+pageNumber - 1) * +pageSize)
-            .limit(+pageSize)
-            .toArray();
-        
-            const totalCount = await postCollection.countDocuments()
-            const pagesCount = Math.ceil(totalCount / +pageSize)
-        return {
-            pagesCount, 
-            page: +pageNumber,
-            pageSize: +pageSize,
-            totalCount,
-            items: posts.map(postMapper)
-        }
-    }
-
-    static async getPostById(id: string): Promise<OutputPostType | null > { //id:string???
-        const post = await postCollection.findOne({_id: new ObjectId(id)})
-
-        if(!post) {
-            return null
-        }
-        
-        return postMapper(post)
-
-    }
-
-    static async getCommentById(postId: string, sortData: QueryCommentByPostIdInputModel) {
-
-        const sortBy = sortData.sortBy ?? 'createdAt'
-        const sortDirection = sortData.sortDirection ?? 'desc'
-        const pageNumber = sortData.pageNumber ?? 1
-        const pageSize = sortData.pageSize ?? 10
-
-        const posts = await commentCollection
-        .find({postId: postId})
-        .sort(sortBy, sortDirection)
-        .skip((+pageNumber - 1) * +pageSize)
-        .limit(+pageSize)
-        .toArray();
-
-        const totalCount = await commentCollection
-        .countDocuments({postId: postId})
-
-        const pagesCount = Math.ceil(totalCount / +pageSize)
-
-        return {
-            pagesCount, 
-            page: +pageNumber,
-            pageSize: +pageSize,
-            totalCount,
-            items: posts.map(postCommentMapper)
-        }
-
-    }
-
-
-    static async createPost (createdPost: PostDBType): Promise<OutputPostType> {
-        const post = await postCollection.insertOne({...createdPost})
+    static async createPost(createdPost: PostDBType): Promise<OutputPostType> {
+        const newPost = new PostsModelClass(createdPost)
+        console.log('newPOst', newPost)
+        await newPost.save()
         return {
             ...createdPost,
-            id: post.insertedId.toString()
+            id: newPost._id.toString()
         }
     }
 
-    static async updatePost (id: string, updatedPost: PostDBType): Promise<boolean> {
-        const post = await postCollection.updateOne({_id: new ObjectId(id)}, { 
-        $set: {
-            title: updatedPost.title,
-            shortDescription: updatedPost.shortDescription,
-            content: updatedPost.content,
-            blogId: updatedPost.blogId
-        }
-        }) 
+    static async updatePost(id: string, updatedPost: PostDBType): Promise<boolean> {
+        const postInstance = await PostsModelClass.findOneAndUpdate(
+            { _id: id },
+            { $set: updatedPost },
+        );
+        if (!postInstance)
+            return false
+        await postInstance.save()
 
-        return !!post.matchedCount
+        return true
 
     }
 
-    static async deletePostById (id: string): Promise<boolean> {
-        const post = await postCollection.deleteOne({_id: new ObjectId(id)})
-
-        return !!post.deletedCount
-
+    static async deletePostById(id: string): Promise<boolean> {
+        const result = await PostsModelClass.findByIdAndDelete({ _id: id })
+        return !!result
     }
 } 

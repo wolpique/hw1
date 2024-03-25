@@ -8,15 +8,16 @@ import { OutputBlogType } from "../models/blog/output/blog.output.models";
 import { RequestWithBody, RequestWithBodyAndParams, RequestWithParams, RequestWithParamsAndQuery, RequestWithQuery } from "../models/common/common";
 import { QueryBlogInputModel, QueryPostByBlogIdInputModel } from "../models/blog/input/blog.input.query.models";
 import { CreatePostBlogModel } from "../models/blog/input/create.blog.input.models";
-import { PostRepository } from "../repositories/post-repository";
 import { OutputPostType } from "../models/post/output/post.output.models";
 import { OutputPageBlogType } from "../models/blog/output/pages.blog.output.models";
 import { OutputPagePostType } from "../models/post/output/pages.post.output.models";
-import { postForBlogByIdValidation, postValidation } from "../middlewares/validators/post-validator";
+import { postForBlogByIdValidation } from "../middlewares/validators/post-validator";
+import { QueryBlogRepository } from "../query-repositories/queryBlogsRepository";
+import { QueryPostRepository } from "../query-repositories/queryPostsRepository";
 
 export const blogRoutes = Router({})
 
-blogRoutes.get('/', async (req: RequestWithQuery<QueryBlogInputModel>, res:Response<OutputPageBlogType>) => {
+blogRoutes.get('/', async (req: RequestWithQuery<QueryBlogInputModel>, res: Response<OutputPageBlogType>) => {
     const sortData = {
         searchNameTerm: req.query.searchNameTerm,
         sortBy: req.query.sortBy,
@@ -24,37 +25,37 @@ blogRoutes.get('/', async (req: RequestWithQuery<QueryBlogInputModel>, res:Respo
         pageNumber: req.query.pageNumber,
         pageSize: req.query.pageSize
     }
-    const blogs = await BlogRepository.getAllBlogs(sortData);
+    const blogs = await QueryBlogRepository.getAllBlogs(sortData);
 
     return res.send(blogs)
 })
 
-blogRoutes.get('/:id', async (req: RequestWithParams<BlogParams>, res:Response) => {
+blogRoutes.get('/:id', async (req: RequestWithParams<BlogParams>, res: Response) => {
     const id = req.params.id
     const blog = await BlogRepository.getBlogById(id)
 
-    if (!ObjectId.isValid(id)){
+    if (!ObjectId.isValid(id)) {
         return res.sendStatus(404)
     }
 
-    if (!blog){
+    if (!blog) {
         return res.sendStatus(404)
     }
     return res.send(blog)
 })
 
-blogRoutes.get('/:id/posts', async (req: RequestWithParamsAndQuery<BlogParams, QueryPostByBlogIdInputModel>, res:Response<OutputPagePostType>) => {
+blogRoutes.get('/:id/posts', async (req: RequestWithParamsAndQuery<BlogParams, QueryPostByBlogIdInputModel>, res: Response<OutputPagePostType>) => {
     const id = req.params.id
 
     const blogs = await BlogRepository.getBlogById(id);
 
-    if (!blogs){
+    if (!blogs) {
         res.sendStatus(404)
         return
     }
 
 
-    if (!ObjectId.isValid(id)){
+    if (!ObjectId.isValid(id)) {
         return res.sendStatus(404)
     }
 
@@ -64,29 +65,30 @@ blogRoutes.get('/:id/posts', async (req: RequestWithParamsAndQuery<BlogParams, Q
         pageNumber: req.query.pageNumber,
         pageSize: req.query.pageSize
     }
-    const posts = await BlogRepository.getPostsByBlogId(id, sortData)
+    const posts = await QueryBlogRepository.getPostsByBlogId(id, sortData)
 
     return res.send(posts)
 })
 
-blogRoutes.post('/', authMiddleware, blogValidation(), async (req: RequestWithBody<BlogBody>, res:Response<OutputBlogType>) => {
-    let {name, description, websiteUrl} = req.body
+blogRoutes.post('/', authMiddleware, blogValidation(), async (req: RequestWithBody<BlogBody>, res: Response<OutputBlogType>) => {
+    let { name, description, websiteUrl } = req.body
     const newBlog = {
+        _id: new ObjectId,
         name,
         description,
         websiteUrl,
         isMembership: false,
         createdAt: new Date().toISOString()
     }
- 
-    
+
+
     const createBlog = await BlogRepository.createBlog(newBlog);
 
     return res.status(201).send(createBlog)
 
 })
 
-blogRoutes.post('/:id/posts', authMiddleware, postForBlogByIdValidation(), async (req: RequestWithBodyAndParams<{id:string}, CreatePostBlogModel>, res:Response<OutputPostType>) => {
+blogRoutes.post('/:id/posts', authMiddleware, postForBlogByIdValidation(), async (req: RequestWithBodyAndParams<{ id: string }, CreatePostBlogModel>, res: Response<OutputPostType>) => {
     const title = req.body.title
     const shortDescription = req.body.shortDescription
     const content = req.body.content
@@ -96,16 +98,16 @@ blogRoutes.post('/:id/posts', authMiddleware, postForBlogByIdValidation(), async
 
     const blogs = await BlogRepository.getBlogById(blogId);
 
-    if (!blogs){
+    if (!blogs) {
         res.sendStatus(404)
         return
     }
 
-    const createdPostId = await BlogRepository.createPostToBlog(blogId, {title, shortDescription, content})
-   
-    const post = await PostRepository.getPostById(createdPostId.toString())
+    const createdPostId = await QueryBlogRepository.createPostToBlog(blogId, { title, shortDescription, content })
 
-    if (!post){
+    const post = await QueryPostRepository.getPostById(createdPostId.toString())
+
+    if (!post) {
         return res.sendStatus(404)
     }
 
@@ -113,19 +115,19 @@ blogRoutes.post('/:id/posts', authMiddleware, postForBlogByIdValidation(), async
 
 })
 
-blogRoutes.put('/:id', authMiddleware, blogValidation(), async (req: RequestWithBodyAndParams<BlogParams, BlogBody>, res:Response) => {
+blogRoutes.put('/:id', authMiddleware, blogValidation(), async (req: RequestWithBodyAndParams<BlogParams, BlogBody>, res: Response) => {
     const id = req.params.id
     const blog = await BlogRepository.getBlogById(id)
 
-    if (!ObjectId.isValid(id)){
+    if (!ObjectId.isValid(id)) {
         return res.sendStatus(404)
     }
 
-    if (!blog){
+    if (!blog) {
         return res.sendStatus(404)
     }
 
-    let {name, description, websiteUrl} = req.body
+    let { name, description, websiteUrl } = req.body
 
     const updatedNewBlog = {
         ...blog,
@@ -136,7 +138,7 @@ blogRoutes.put('/:id', authMiddleware, blogValidation(), async (req: RequestWith
 
     const blogIsUpdated = await BlogRepository.updateBlog(id, updatedNewBlog)
 
-    if(!blogIsUpdated){
+    if (!blogIsUpdated) {
         return res.sendStatus(404)
     }
 
@@ -144,10 +146,10 @@ blogRoutes.put('/:id', authMiddleware, blogValidation(), async (req: RequestWith
 
 })
 
-blogRoutes.delete('/:id', authMiddleware, async (req:RequestWithParams<BlogParams>, res:Response) => {
+blogRoutes.delete('/:id', authMiddleware, async (req: RequestWithParams<BlogParams>, res: Response) => {
     const id = req.params.id
-    
-    if (!ObjectId.isValid(id)){
+
+    if (!ObjectId.isValid(id)) {
         return res.sendStatus(404)
     }
 

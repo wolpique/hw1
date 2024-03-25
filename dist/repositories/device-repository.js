@@ -8,42 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DevicesRepository = void 0;
-const db_1 = require("../db/db");
+const device_schema_1 = require("../domain/schemas/device.schema");
 class DevicesRepository {
-    static getAllDevicesByUser(userId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const devices = yield db_1.devicesCollection
-                .find({ userId })
-                .toArray();
-            const mappedDevices = devices.map((device) => {
-                const { _id, userId, refreshTokenSignature } = device, outputDevice = __rest(device, ["_id", "userId", "refreshTokenSignature"]);
-                return outputDevice;
-            });
-            return mappedDevices;
-        });
-    }
     static findDeviceIdByUser(deviceId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const device = db_1.devicesCollection.findOne({ deviceId });
+            const device = device_schema_1.DevicesModelClass.findOne({ deviceId });
             return device;
         });
     }
     static deleteAllDevicesExceptCurrent(userId, deviceId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const deleted = yield db_1.devicesCollection
+            const deleted = yield device_schema_1.DevicesModelClass
                 .deleteMany({
                 userId,
                 deviceId: { $ne: deviceId }
@@ -53,13 +30,13 @@ class DevicesRepository {
     }
     static deleteDeviceById(userId, deviceId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const deleted = yield db_1.devicesCollection.deleteOne({ userId, deviceId });
+            const deleted = yield device_schema_1.DevicesModelClass.deleteOne({ userId, deviceId });
             return deleted.deletedCount > 0;
         });
     }
     static insertNewSession(userId, ip, title, lastActiveDate, deviceId, refreshTokenSignature) {
         return __awaiter(this, void 0, void 0, function* () {
-            const session = yield db_1.devicesCollection.insertOne({
+            const session = yield device_schema_1.DevicesModelClass.create({
                 ip,
                 title,
                 lastActiveDate,
@@ -70,18 +47,10 @@ class DevicesRepository {
             return session;
         });
     }
-    // static async getLastActiveDate(userId: string, deviceId: string) {
-    //     const activeDate = await devicesCollection.findOne({ userId, deviceId })
-    //     if (activeDate) {
-    //         return activeDate.lastActiveDate
-    //     } else {
-    //         return null
-    //     }
-    // }
     static updateLastActiveDate(userId) {
         return __awaiter(this, void 0, void 0, function* () {
             const currentDate = (new Date()).toISOString();
-            const update = yield db_1.devicesCollection.updateOne({ userId }, { $set: { lastActiveDate: currentDate } });
+            const update = yield device_schema_1.DevicesModelClass.updateOne({ userId }, { $set: { lastActiveDate: currentDate } });
             if (update.modifiedCount === 0) {
                 return false;
             }

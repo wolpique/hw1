@@ -4,9 +4,9 @@ exports.usersMapper = void 0;
 const usersMapper = (usersDb) => {
     return {
         id: usersDb._id.toString(),
-        login: usersDb.accountData.login,
-        email: usersDb.accountData.email,
-        createdAt: usersDb.accountData.createdAt
+        login: usersDb.login,
+        email: usersDb.email,
+        createdAt: usersDb.createdAt
     };
 };
 exports.usersMapper = usersMapper;

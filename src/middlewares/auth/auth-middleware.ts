@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { jwtService } from "../../services/jwt-service";
 import { usersService } from "../../services/users.service";
+import jwt from 'jsonwebtoken'
 
 const login = 'admin'
 const password = 'qwerty'
@@ -40,15 +41,21 @@ export const bearerAuth = async (req: Request, res: Response, next: NextFunction
         return res.sendStatus(401)
     }
 
-    const token = auth.split(' ')[1]
+    const [bearer, token] = auth.split(" ");
+    if (bearer !== 'Bearer') {
+        return res.sendStatus(401);
+    }
+    console.log('tokentokentokentoken', token)
 
     const userId = await jwtService.getUserIdByToken(token)
+    console.log('userIduserIduserId', userId)
 
     if (!userId) {
         return res.sendStatus(401)
     }
 
     const user = await usersService.findUserById(userId.toString())
+    console.log('user', user)
 
     if (!user) {
         return res.sendStatus(401)
@@ -58,23 +65,23 @@ export const bearerAuth = async (req: Request, res: Response, next: NextFunction
     return next()
 }
 
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-    const refreshToken = req.cookies['refreshToken']
+// export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+//     const refreshToken = req.cookies['refreshToken']
 
-    if (!refreshToken) {
+//     if (!refreshToken) {
 
-        return res.status(401).send('Access denied, no token provided ')
-    }
+//         return res.status(401).send('Access denied, no token provided ')
+//     }
 
-    const decodedRefreshToken = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
+//     const decodedRefreshToken = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
 
 
-    if (!decodedRefreshToken) {
-        res.sendStatus(401)
-        return
-    }
+//     if (!decodedRefreshToken) {
+//         res.sendStatus(401)
+//         return
+//     }
 
-    return next()
+//     return next()
 
-}
+// }
 

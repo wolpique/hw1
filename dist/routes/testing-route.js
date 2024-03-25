@@ -11,13 +11,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.testingRoutes = void 0;
 const express_1 = require("express");
-const db_1 = require("../db/db");
+const users_schema_1 = require("../domain/schemas/users.schema");
+const blogs_schema_1 = require("../domain/schemas/blogs.schema");
+const posts_schema_1 = require("../domain/schemas/posts.schema");
+const device_schema_1 = require("../domain/schemas/device.schema");
 exports.testingRoutes = (0, express_1.Router)({});
 exports.testingRoutes.delete('/all-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //await database.dropDatabase()
-    yield db_1.usersCollection.deleteMany({});
-    yield db_1.blogCollection.deleteMany({});
-    yield db_1.postCollection.deleteMany({});
-    yield db_1.devicesCollection.deleteMany({});
+    yield users_schema_1.UsersModelClass.deleteMany({});
+    yield blogs_schema_1.BlogsModelClass.deleteMany({});
+    yield posts_schema_1.PostsModelClass.deleteMany({});
+    yield device_schema_1.DevicesModelClass.deleteMany({});
     return res.sendStatus(204);
 }));

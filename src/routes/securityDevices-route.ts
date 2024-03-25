@@ -1,41 +1,26 @@
 import { Router, Request, Response } from "express";
-import { UsersRepository } from "../repositories/users-repository";
 import { jwtService } from "../services/jwt-service";
 import { DevicesRepository } from "../repositories/device-repository";
+import { QueryDevicesRepository } from "../query-repositories/queryDevicesRepository";
+import { authRefreshTokenBearerValidator } from "../middlewares/validators/refreshToken-validator";
 
 export const securityDeviceRoute = Router({})
 
-securityDeviceRoute.get('/devices', async (req: Request, res: Response) => {
+securityDeviceRoute.get('/devices', authRefreshTokenBearerValidator, async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken
-
-    if (!refreshToken) {
-        return res
-            .status(401)
-            .send('Refresh token is not found')
-    }
-
-    const decodedToken = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
+    const decodedToken = await jwtService.decodeRefreshToken(refreshToken)
     if (!decodedToken) {
         return res
             .status(401)
             .send('Invalid token!')
     }
-
-    const user = await UsersRepository.findUserById(decodedToken.userId)
-    if (!user) {
-        return res
-            .status(401)
-            .send('User is not found')
-    }
-
-    const devices = await DevicesRepository.getAllDevicesByUser(decodedToken.userId)
+    const devices = await QueryDevicesRepository.getAllDevicesByUser(decodedToken.userId)
     if (!devices) {
         return res.sendStatus(401)
     } else {
         return res.status(200).send(devices)
     }
 })
-
 
 securityDeviceRoute.delete('/devices', async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken
@@ -45,7 +30,7 @@ securityDeviceRoute.delete('/devices', async (req: Request, res: Response) => {
             .send('Refresh token is not found')
     }
 
-    const decodedToken = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
+    const decodedToken = await jwtService.decodeRefreshToken(refreshToken)
 
     if (!decodedToken) {
         return res
@@ -66,7 +51,7 @@ securityDeviceRoute.delete('/devices', async (req: Request, res: Response) => {
     }
 })
 
-securityDeviceRoute.delete('/devices/:deviceId', async (req: Request, res: Response) => {
+securityDeviceRoute.delete('/devices/:deviceId', authRefreshTokenBearerValidator, async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken
     const deviceId = req.params.deviceId
 
@@ -82,13 +67,7 @@ securityDeviceRoute.delete('/devices/:deviceId', async (req: Request, res: Respo
             .send('DeviceID token is not found')
     }
 
-    const decodedToken = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
-
-    const check = await jwtService.checkValidityOfToken(decodedToken.userId, decodedToken.deviceId, refreshToken)
-
-    if (check == false) {
-        return res.status(401).send('Access Denied. Invalid refresh token provided.')
-    }
+    const decodedToken = await jwtService.decodeRefreshToken(refreshToken)
 
     if (!decodedToken) {
         return res
@@ -97,7 +76,6 @@ securityDeviceRoute.delete('/devices/:deviceId', async (req: Request, res: Respo
     }
 
     const device = await DevicesRepository.findDeviceIdByUser(deviceId)
-    console.log('device', device)
 
     if (!device) {
         return res

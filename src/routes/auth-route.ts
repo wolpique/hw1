@@ -1,17 +1,17 @@
 import { Router, Request, Response } from "express";
 import { RequestWithBody } from "../models/common/common";
-import { authLoginValidation, authRegistrationValidation, codeValidationMiddleware, emailValidationMiddleware } from "../middlewares/validators/auth-validator";
+import { authLoginValidation, authRegistrationValidation, codeValidationMiddleware, emailPasswordValidationMiddleware, emailValidationMiddleware, newPasswordValidationMiddleware, passwordValidationMiddleware } from "../middlewares/validators/auth-validator";
 import { usersService } from "../services/users.service";
 import { AuthLoginModel } from "../models/auth/auth-model/auth-login-models";
-import { UsersRepository } from "../repositories/users-repository";
 import { jwtService } from "../services/jwt-service";
-import { authenticate, bearerAuth } from "../middlewares/auth/auth-middleware";
+import { bearerAuth } from "../middlewares/auth/auth-middleware";
 import { authService } from "../services/auth.service";
 import { UserInputModel } from "../models/users/input/user-input-mode";
 import { cookieService } from "../application/cookies";
 import { limitRequestMiddleware } from "../middlewares/auth/limit-requests";
 import { DevicesRepository } from "../repositories/device-repository";
-import { ObjectId } from "mongodb";
+import { authRefreshTokenBearerValidator } from "../middlewares/validators/refreshToken-validator";
+import { UsersRepository } from "../repositories/users-repository";
 
 
 export const authRoute = Router({})
@@ -20,9 +20,7 @@ export const authRoute = Router({})
 authRoute.post('/login', limitRequestMiddleware, authLoginValidation(), async (req: RequestWithBody<AuthLoginModel>, res: Response) => {
 
     const user = await usersService.checkCredentials(req.body.loginOrEmail, req.body.password)
-    if (!user) {
-        return res.sendStatus(401)
-    }
+    console.log('useruseruser', user)
 
     if (user) {
         let { accessToken, refreshToken, newdeviceId, decoded, user_id } = await authService.loginUser(user)
@@ -46,75 +44,12 @@ authRoute.post('/login', limitRequestMiddleware, authLoginValidation(), async (r
     }
 })
 
-authRoute.post('/refresh-token', authenticate, async (req: RequestWithBody<{ id: string, refreshToken: string }>, res: Response) => {
-
+authRoute.post('/logout', authRefreshTokenBearerValidator, async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken
-
-    if (!refreshToken) {
-
-        return res.status(401).send('Access Denied. No refresh token provided.')
-    }
-    try {
-
-        const decoded = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
-
-        if (!decoded) {
-
-            return res.status(401).send('Refresh token has expired')
-        }
-
-        const check = await jwtService.checkValidityOfToken(decoded.userId, decoded.deviceId, refreshToken)
-
-        if (check == false) {
-            return res.status(401).send('Access Denied. Invalid refresh token provided.')
-        }
-
-        const user = await usersService.findUserById(decoded.userId);
-        if (!user) {
-
-            return res.sendStatus(401);
-        }
-        //const newdeviceId = new ObjectId().toString()
-
-        const update = await DevicesRepository.updateLastActiveDate(user.id);
-        if (update == false) {
-            return res.status(401).send('LastActiveDate is invalid.')
-        }
-
-        const newAccessToken = await jwtService.generateAccessToken(user.id)
-        const newRefreshToken = await jwtService.generateAndStoreRefreshToken(user.id, decoded.deviceId); //в ауз сервис
-
-        //const updateDate = await DevicesRepository.updateLastActiveDate(user.id, newdeviceId);
-        await cookieService.setRefreshTokenCookie(res, newRefreshToken)
-        return res.send({ accessToken: newAccessToken })
-    } catch (error) {
-        return res.sendStatus(401)
-    }
-})
-
-authRoute.post('/logout', async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken
-
-    if (!refreshToken) {
-        return res.status(401).send('Access Denied. No refresh token provided.');
-    }
 
     try {
 
-        const decoded = await jwtService.verifyAndDecodeRefreshToken(refreshToken)
-
-
-        if (!decoded) {
-            return res.status(401).send('Refresh token has expired')
-        }
-        const check = await jwtService.checkValidityOfToken(decoded.userId, decoded.deviceId, refreshToken)
-
-        if (check == false) {
-            return res.status(401).send('Access Denied. Invalid refresh token provided.')
-        }
-
-        //await jwtService.InvalidRefreshToken(refreshToken)
-
+        const decoded = await jwtService.decodeRefreshToken(refreshToken)
         const { userId, deviceId } = decoded
         const deleted = await DevicesRepository.deleteDeviceById(userId, deviceId)
         if (deleted == false) {
@@ -126,6 +61,35 @@ authRoute.post('/logout', async (req: Request, res: Response) => {
         return null
     }
 
+})
+
+authRoute.post('/refresh-token', authRefreshTokenBearerValidator, async (req: Request, res: Response) => {
+
+    try {
+        const userId = req.user.id
+        const user = await usersService.findUserById(userId)
+
+        console.log('userId', userId)
+
+        const update = await DevicesRepository.updateLastActiveDate(userId);
+        console.log('update', update)
+        if (update == false) {
+            return res.status(401).send('LastActiveDate is invalid.')
+        }
+
+        const newAccessToken = await jwtService.generateAccessToken(userId)
+        console.log('newAccessToken', newAccessToken)
+
+        const newRefreshToken = await jwtService.generateAndStoreRefreshToken(userId, userId.deviceId); //в ауз сервис
+        console.log('newRefreshToken', newRefreshToken)
+
+
+        await cookieService.setRefreshTokenCookie(res, newRefreshToken)
+        return res.send({ accessToken: newAccessToken })
+    } catch (error) {
+        console.log("error", error)
+        return res.sendStatus(401)
+    }
 })
 
 authRoute.post('/registration', limitRequestMiddleware, authRegistrationValidation(), async (req: RequestWithBody<UserInputModel>, res: Response) => {
@@ -140,6 +104,7 @@ authRoute.post('/registration', limitRequestMiddleware, authRegistrationValidati
 
 authRoute.post('/registration-email-resending', limitRequestMiddleware, emailValidationMiddleware(), async (req: RequestWithBody<{ email: string }>, res: Response) => {
     const resend = await authService.emailResending(req.body.email)
+    console.log('THIS IS RESEND', resend);
     if (!resend) {
         return res.status(400).send({ errorsMessages: [{ message: "Slomalsya", field: "email" }] })
     } else {
@@ -156,27 +121,38 @@ authRoute.post('/registration-confirmation', limitRequestMiddleware, codeValidat
     }
 })
 
-authRoute.get('/me', bearerAuth, async (req: Request, res: Response) => {
-    const auth = req.headers['authorization']
-
-    if (!auth) {
-        return res.sendStatus(401)
+authRoute.post('/password-recovery', limitRequestMiddleware, emailPasswordValidationMiddleware(), async (req: RequestWithBody<{ email: string }>, res: Response) => {
+    const email = req.body.email
+    console.log('EMAIL HERE', email)
+    const registered = await UsersRepository.findByEmail(email)
+    if (!registered) {
+        return res.sendStatus(204)
     }
-    const accessToken = auth.split(' ')[1]
+    const resend = await authService.emailResendingPassword(email)
 
-    const verifyToken = await jwtService.verifyAndDecodeAccessToken(accessToken);
+    return res.sendStatus(204)
 
-    if (!verifyToken) {
-        return res.sendStatus(401);
-
-    }
-
-    const userData = await UsersRepository.findUserById(verifyToken.userId)
-
-    if (!userData) {
-        return res.sendStatus(401)
-    }
-
-    return res.status(200).send({ userId: userData.id, login: userData.login, email: userData.email })
 })
+
+authRoute.post('/new-password', limitRequestMiddleware, newPasswordValidationMiddleware(), async (req: RequestWithBody<{ newPassword: string, recoveryCode: string }>, res: Response) => {
+    const newPassword = req.body.newPassword
+    const recoveryCode = req.body.recoveryCode
+
+    const confirm = await authService.confirmPassword(newPassword, recoveryCode)
+    if (!confirm) {
+        return res.status(400).send({ errorsMessages: [{ message: 'Incoect', field: "recoveryCode" }] })
+    }
+    return res.status(204).send();
+
+})
+
+authRoute.get('/me', bearerAuth, async (req: Request, res: Response) => {
+    const userId: string = req.user!.id
+    console.log("userId", userId)
+    const result = await authService.meInfo(userId)
+    console.log("result", result)
+
+    return res.status(200).send(result)
+})
+
 

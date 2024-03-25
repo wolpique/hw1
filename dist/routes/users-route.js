@@ -20,6 +20,7 @@ const users_validator_1 = require("../middlewares/validators/users-validator");
 const auth_middleware_1 = require("../middlewares/auth/auth-middleware");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const crypto_1 = require("crypto");
+const queryUsersRepository_1 = require("../query-repositories/queryUsersRepository");
 exports.usersRoute = (0, express_1.Router)({});
 exports.usersRoute.get('/', auth_middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const sortData = {
@@ -30,7 +31,7 @@ exports.usersRoute.get('/', auth_middleware_1.authMiddleware, (req, res) => __aw
         searchLoginTerm: req.query.searchLoginTerm,
         searchEmailTerm: req.query.searchEmailTerm
     };
-    const users = yield users_repository_1.UsersRepository.getAllUsers(sortData);
+    const users = yield queryUsersRepository_1.QueryUsersRepository.getAllUsers(sortData);
     return res.send(users);
 }));
 exports.usersRoute.post('/', auth_middleware_1.authMiddleware, (0, users_validator_1.usersValidator)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -38,12 +39,10 @@ exports.usersRoute.post('/', auth_middleware_1.authMiddleware, (0, users_validat
     const passwordHash = yield bcrypt_1.default.hash(password, 10);
     const newUser = {
         _id: new mongodb_1.ObjectId(),
-        accountData: {
-            login,
-            password: passwordHash,
-            email,
-            createdAt: new Date().toISOString()
-        },
+        login,
+        password: passwordHash,
+        email,
+        createdAt: new Date().toISOString(),
         emailConfirmation: {
             isConfirmed: true,
             code: (0, crypto_1.randomUUID)(),

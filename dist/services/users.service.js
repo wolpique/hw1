@@ -17,19 +17,17 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const users_repository_1 = require("../repositories/users-repository");
 const mongodb_1 = require("mongodb");
 const crypto_1 = require("crypto");
+const queryUsersRepository_1 = require("../query-repositories/queryUsersRepository");
 exports.usersService = {
     addNewUsers(login, email, password) {
         return __awaiter(this, void 0, void 0, function* () {
-            //const passwordSalt = await bcrypt.genSalt(10)
             const passwordHash = yield bcrypt_1.default.hash(password, 10); //passwordSalt
             const newUser = {
                 _id: new mongodb_1.ObjectId(),
-                accountData: {
-                    login,
-                    email,
-                    password: passwordHash,
-                    createdAt: new Date().toISOString()
-                },
+                login,
+                email,
+                password: passwordHash,
+                createdAt: new Date().toISOString(),
                 emailConfirmation: {
                     isConfirmed: true,
                     code: (0, crypto_1.randomUUID)(),
@@ -41,7 +39,7 @@ exports.usersService = {
     },
     findUserById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return users_repository_1.UsersRepository.findUserById(id);
+            return queryUsersRepository_1.QueryUsersRepository.findUserById(id);
         });
     },
     findUserByRefreshToken(refreshToken) {
@@ -55,7 +53,8 @@ exports.usersService = {
             if (!user) {
                 return null;
             }
-            const checkResult = yield bcrypt_1.default.compare(password, user.accountData.password); //rename pass2
+            const checkResult = yield bcrypt_1.default.compare(password, user.password); //rename pass2
+            console.log('checkResult', checkResult);
             if (!checkResult) {
                 return null;
             }
