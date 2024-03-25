@@ -106,7 +106,7 @@ exports.authRoute.post('/registration-confirmation', limit_requests_1.limitReque
 }));
 exports.authRoute.post('/password-recovery', limit_requests_1.limitRequestMiddleware, (0, auth_validator_1.emailPasswordValidationMiddleware)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const email = req.body.email;
-    console.log('EMAIL HERE', email);
+    console.log('EMAIL', email);
     const registered = yield users_repository_1.UsersRepository.findByEmail(email);
     if (!registered) {
         return res.sendStatus(204);

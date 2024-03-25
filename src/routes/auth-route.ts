@@ -123,7 +123,7 @@ authRoute.post('/registration-confirmation', limitRequestMiddleware, codeValidat
 
 authRoute.post('/password-recovery', limitRequestMiddleware, emailPasswordValidationMiddleware(), async (req: RequestWithBody<{ email: string }>, res: Response) => {
     const email = req.body.email
-    console.log('EMAIL HERE', email)
+    console.log('EMAIL', email)
     const registered = await UsersRepository.findByEmail(email)
     if (!registered) {
         return res.sendStatus(204)
